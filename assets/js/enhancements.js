@@ -64,7 +64,7 @@ window.gameAudio = (() => {
 /* Gráfica interactiva de Métodos Numéricos (Euler vs Solución Exacta) */
 window.mountPendulum = function(graph, isActive) {
   const ns = 'http://www.w3.org/2000/svg', panel = document.createElement('div');
-  panel.className = 'numerical_calculus';
+  panel.className = 'pendulum-simulation';
   panel.innerHTML = `
     <p>IVP dy/dt = y · Comparación entre Solución Exacta e (línea azul) y Método de Euler con paso h = 0.2 (marcadores amarillos).</p>
     <svg viewBox="0 0 400 240" aria-label="Visualización del error de Euler vs Exacta" role="img">
