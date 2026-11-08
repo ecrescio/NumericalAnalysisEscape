@@ -64,7 +64,7 @@ window.gameAudio = (() => {
 /* Gráfica interactiva de Métodos Numéricos (Euler vs Solución Exacta) */
 window.mountPendulum = function(graph, isActive) {
   const ns = 'http://www.w3.org/2000/svg', panel = document.createElement('div');
-  panel.className = 'pendulum-simulation';
+  panel.className = 'numerical_calculus';
   panel.innerHTML = `
     <p>IVP dy/dt = y · Comparación entre Solución Exacta e (línea azul) y Método de Euler con paso h = 0.2 (marcadores amarillos).</p>
     <svg viewBox="0 0 400 240" aria-label="Visualización del error de Euler vs Exacta" role="img">
@@ -93,7 +93,7 @@ window.mountSpring = function(anchor, isActive) {
   panel.className = 'spring-simulation';
   panel.innerHTML = `
     <p>Simulación de Acumulación del Error Global GTE: Al reducir h a la mitad (0.2 ➔ 0.1), el error al final del intervalo se reduce a la mitad O(h) en Euler y a la cuarta parte O(h²) en Heun/Punto Medio.</p>
-    <svg class="spring-scene" viewBox="0 0 540 140" role="img">
+    <svg class="Errors" viewBox="0 0 540 140" role="img">
       <path d="M 40 110 L 500 110" stroke="#aaa" stroke-width="2"/>
       <text x="50" y="40" fill="#73dcca" font-size="14">Curva Exacta</text>
       <text x="50" y="70" fill="#e8c882" font-size="14">Paso h = 0.2 (2 pasos)</text>
