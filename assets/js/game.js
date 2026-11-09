@@ -82,7 +82,14 @@
   }
 
   function latex(t) {
-    return t.replaceAll('−', '-').replaceAll('½', String.raw`\frac{1}{2}`).replaceAll('Δ', String.raw`\Delta `).replaceAll('²', '^2').replaceAll('₁', '_1').replaceAll('₂', '_2').replaceAll('×', String.raw`\times `);
+    if (!t) return '';
+    return t.replaceAll('−', '-')
+            .replaceAll('½', String.raw`\frac{1}{2}`)
+            .replaceAll('Δ', String.raw`\Delta `)
+            .replaceAll('²', '^2')
+            .replaceAll('₁', '_1')
+            .replaceAll('₂', '_2')
+            .replaceAll('×', String.raw`\times `);
   }
 
   function fitFormulae() {
@@ -102,24 +109,33 @@
     const mainApp = app();
     if (!mainApp) return;
     requestAnimationFrame(fitFormulae);
+    
+    // Renderizar formulas principales
     mainApp.querySelectorAll('.formula').forEach(el => {
       const t = el.textContent;
       el.replaceChildren();
       t.split(/\\qquad|\s{3,}/).forEach(part => el.append(math(latex(part.trim()))));
     });
+
     const qList = window.ESCAPE_QUESTIONS || [];
     mainApp.querySelectorAll('.answer-option').forEach(el => {
-      if (qList[i] && ['cards', 'search'].includes(qList[i].type) && !qList[i].eulerSim) el.replaceChildren(math(latex(el.textContent)));
+      if (qList[i] && ['cards', 'search'].includes(qList[i].type) && !qList[i].eulerSim) {
+        el.replaceChildren(math(latex(el.textContent)));
+      }
     });
-    const walk = document.createTreeWalker(mainApp, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    while (walk.nextNode()) nodes.push(walk.currentNode);
-    nodes.filter(n => !n.parentElement.closest('.math-inline,.formula,svg,input,select')).forEach(n => {
-      const parts = n.textContent.split(/(\b(?:y_{n\+1}|y_n|f\(t,y\)|h|O\(h\^2\)|O\(h\)|dy\/dt)\b)/);
-      if (parts.length < 2) return;
-      const f = document.createDocumentFragment();
-      parts.forEach((t, j) => f.append(j % 2 ? math(t) : document.createTextNode(t)));
-      n.replaceWith(f);
+
+    // Renderizar math en texto de lecciones y simulación
+    mainApp.querySelectorAll('.euler-simulation p, .challenge-card p, .lesson-card p').forEach(el => {
+      if (el.dataset.katexRendered) return;
+      const text = el.innerHTML;
+      if (text.includes('$')) {
+        el.innerHTML = text.replace(/\$(.*?)\$/g, (match, formula) => {
+          const span = document.createElement('span');
+          if (window.katex) katex.render(formula, span, { throwOnError: false });
+          return span.outerHTML;
+        });
+        el.dataset.katexRendered = "true";
+      }
     });
   }
 
@@ -143,7 +159,6 @@
 
     const mainApp = app();
     if (!mainApp) return;
-
 
     mainApp.innerHTML = `
       <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; width: 100%;">
@@ -261,11 +276,6 @@
 
     if (q.eulerSim && window.mountEulerSimulation) {
       window.mountEulerSimulation($('magnifier-controls'), () => stage === 'question');
-      const bank = document.createElement('p');
-      bank.setAttribute('role', 'status');
-      bank.style.color = '#e8c882';
-      bank.textContent = 'Ajusta el slider de h para observar la acumulación del error de truncamiento.';
-      $('choices').before(bank);
     }
 
     if (q.type === 'search') {
@@ -284,6 +294,8 @@
         });
       }
     }
+
+    typeset();
   }
 
   function answer(value, correct) {
@@ -348,7 +360,6 @@
     document.body.append(layer); setTimeout(() => layer.remove(), 1500);
   }
 
-  // Event Listeners generales
   document.addEventListener('submit', e => {
     if (e.target.id === 'entry') {
       e.preventDefault();
@@ -404,7 +415,6 @@
     }
   });
 
-  // Inicialización
   function init() {
     if (window.gameAudio && $('sound-toggle')) window.gameAudio.init($('sound-toggle'));
     const brand = document.querySelector('.brand');
