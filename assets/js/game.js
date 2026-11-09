@@ -122,43 +122,39 @@
   }
 
   function home() {
-    saveAttempt(); 
-    s = null; 
-    stop(); 
-    if (modal) modal.innerHTML = ''; 
-    stage = 'home'; 
-    const timerChip = $('timer-chip');
-    if (timerChip) timerChip.hidden = true;
+  saveAttempt(); 
+  s = null; 
+  stop(); 
+  if (modal) modal.innerHTML = ''; 
+  stage = 'home'; 
+  
+  const timerChip = $('timer-chip');
+  if (timerChip) timerChip.hidden = true;
 
-    app.innerHTML = `
-      <section class="hero">
-        <div>
-          <div class="eyebrow">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
-          <h1>Manual Encantado de<br><em>IVPs y ODEs</em></h1>
-          <p class="hero-lead">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
-          <form id="entry">
-            <label>Nombre y Apellido
-              <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García">
-            </label>
-            <label>Curso / Grupo
-              <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1">
-            </label>
-            <p class="lesson-footnote">Descarga tus resultados al finalizar y entrégalos a tu instructor.</p>
-            <p>12 minutos. Cada respuesta incorrecta resta 20 segundos. Tu puntaje se basa en la precisión del primer intento.</p>
-            <button type="submit" class="button button-primary">Ingresar al manual →</button>
-          </form>
-        </div>
-        <div class="hero-art">
-          <div class="orbit orbit-a"></div>
-          <div class="book">
-            <div class="book-rune">∫</div>
-            <div class="book-title">MÉTODOS<br>NUMÉRICOS</div>
-          </div>
-        </div>
-      </section>
-    `;
-  }
-
+  app.innerHTML = `
+    <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; padding: 20px; text-align: center;">
+      <div style="max-width: 520px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div class="eyebrow" style="color: #e8c882; font-weight: bold; letter-spacing: 1px; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
+        <h1 style="margin: 0 0 10px 0; font-size: 2em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
+        <p class="hero-lead" style="color: #a7a2b0; font-size: 0.95em; margin-bottom: 25px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
+        
+        <form id="entry" style="display: flex; flex-direction: column; gap: 18px; text-align: left;">
+          <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
+            <strong>Nombre y Apellido:</strong>
+            <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
+            <strong>Curso / Grupo:</strong>
+            <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+          </label>
+          <p class="lesson-footnote" style="font-size: 0.8em; color: #8a8599; margin: 0;">Descarga tus resultados al finalizar y entrégalos a tu instructor.</p>
+          <p style="font-size: 0.85em; color: #e8c882; margin: 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #e8c882;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
+          <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 5px; transition: background 0.2s;">Ingresar al manual →</button>
+        </form>
+      </div>
+    </section>
+  `;
+}
   function begin(form) {
     pausedAt = 0; 
     pausedTotal = 0; 
