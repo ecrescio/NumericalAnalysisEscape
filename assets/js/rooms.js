@@ -1,47 +1,56 @@
 window.ESCAPE_QUESTIONS = [
-  // --- SALA 1: EULER EXPLÍCITO ---
+  // ==========================================
+  // SALA 1: EULER EXPLÍCITO (room: 0)
+  // ==========================================
   {
     room: 0,
     type: 'choice',
-    title: 'Paso de Integración de Euler',
-    theory: 'El método de Euler aproximó la solución de dy/dt = f(t,y) avanzando mediante la tangente en el punto actual.',
+    title: 'El Paso de Euler Explícito',
+    theory: 'El método de Euler aproximó la solución de un IVP (dy/dt = f(t,y)) avanzando a lo largo de la recta tangente en el punto actual.',
     formula: 'y_{n+1} = y_n + h \\cdot f(t_n, y_n)',
-    text: 'Dada dy/dt = 2t + y con y(0) = 1 y un paso h = 0.1, ¿cuál es el valor aproximado de y(0.1)?',
+    text: 'Dada dy/dt = 2t + y con y(0) = 1 y paso h = 0.1, ¿cuál es el valor aproximado de y(0.1)?',
     options: ['1.10', '1.20', '1.05', '1.15'],
     hint: 'Calcula f(0, 1) = 2(0) + 1 = 1. Luego y_1 = 1 + 0.1(1).',
-    solution: 'f(0,1) = 1. Por lo tanto, y(0.1) ≈ 1 + 0.1(1) = 1.10.'
+    solution: 'f(0,1) = 1. Aplicando Euler: y(0.1) ≈ 1 + 0.1(1) = 1.10.'
   },
   {
     room: 0,
     type: 'number',
     title: 'El Candado Numérico de Euler',
-    theory: 'Aplica el método de Euler paso a paso.',
+    theory: 'Calcula la aproximación en el primer paso para una ecuación diferencial lineal.',
     formula: 'y_{n+1} = y_n + h \\cdot f(t_n, y_n)',
-    text: 'Para dy/dt = -y con y(0) = 2 y h = 0.2, ingresa el valor calculado para y(0.2).',
-    value: 1.6, // Calculado como: 2 + 0.2*(-2) = 1.6
-    hint: 'Sustituye t_0 = 0, y_0 = 2 en la ecuación diferencial.',
+    text: 'Para dy/dt = -y con y(0) = 2 y h = 0.2, ingresa el valor aproximado para y(0.2).',
+    value: 1.6,
+    hint: 'Evalúa f(0, 2) = -2. Luego calcula 2 + 0.2(-2).',
     solution: 'y_1 = 2 + 0.2(-2) = 1.6.'
   },
 
-  // --- SALA 2: HEUN Y EULER IMPLÍCITO ---
+  // ==========================================
+  // SALA 2: HEUN Y EULER IMPLÍCITO (room: 1)
+  // ==========================================
   {
     room: 1,
     type: 'choice',
-    title: 'Fórmula del Predictor-Corrector (Heun)',
-    theory: 'El método de Heun promedia las pendientes al inicio y al final del intervalo.',
+    title: 'El Predictor-Corrector de Heun',
+    theory: 'El método de Heun promedia las pendientes al inicio y al final del intervalo para mejorar la precisión a O(h²).',
     formula: 'y_{n+1} = y_n + \\frac{h}{2} [f(t_n, y_n) + f(t_{n+1}, y_{n+1}^0)]',
-    text: '¿Qué método utiliza Heun para obtener la predicción inicial y_{n+1}^0?',
-    options: ['Euler Explícito', 'Euler Implícito', 'Runge-Kutta de 4º orden', 'Diferencias Finitas'],
-    hint: 'Es el método explícito más simple para predecir el siguiente valor.',
-    solution: 'Heun usa Euler explícito como paso predictor.'
+    text: '¿Qué método utiliza Heun para obtener el valor estimado inicial y_{n+1}^0 (paso predictor)?',
+    options: [
+      'Euler Explícito', 
+      'Euler Implícito', 
+      'Runge-Kutta de 4º orden', 
+      'Diferencias Finitas centradas'
+    ],
+    hint: 'Es el método de avance por tangente más básico evaluado en t_n.',
+    solution: 'Heun utiliza el método de Euler Explícito como paso predictor para estimar la pendiente futura.'
   },
   {
     room: 1,
     type: 'choice',
-    title: 'Ecuaciones Implícitas',
-    theory: 'En el método de Euler Implícito la derivada se evalúa en el punto futuro t_{n+1}.',
+    title: 'Despeje en Euler Implícito',
+    theory: 'En el método de Euler Implícito la derivada se evalúa en el punto futuro t_{n+1}, lo que requiere resolver una ecuación algebraica.',
     formula: 'y_{n+1} = y_n + h \\cdot f(t_{n+1}, y_{n+1})',
-    text: 'Para la ODE rígida (stiff) dy/dt = -50y, ¿cuál es la ecuación algebraica para y_{n+1} en Euler Implícito?',
+    text: 'Para la ODE rígida dy/dt = -50y, ¿cuál es la ecuación para y_{n+1} mediante Euler Implícito?',
     options: [
       'y_{n+1} = \\frac{y_n}{1 + 50h}',
       'y_{n+1} = y_n (1 - 50h)',
@@ -49,49 +58,80 @@ window.ESCAPE_QUESTIONS = [
       'y_{n+1} = y_n + 50h'
     ],
     hint: 'Sustituye f(t_{n+1}, y_{n+1}) = -50 y_{n+1} y despeja y_{n+1}.',
-    solution: 'y_{n+1} = y_n - 50h y_{n+1} ⟹ y_{n+1}(1 + 50h) = y_n.'
+    solution: 'y_{n+1} = y_n - 50h y_{n+1} ⟹ y_{n+1}(1 + 50h) = y_n ⟹ y_{n+1} = y_n / (1 + 50h).'
+  },
+  {
+    room: 1,
+    type: 'dial',
+    title: 'Cómputo en Euler Implícito',
+    theory: 'Aplica la fórmula obtenida para Euler Implícito.',
+    formula: 'y_{n+1} = \\frac{y_n}{1 - h \\lambda}',
+    text: 'Dada dy/dt = -10y con y(0) = 1 y paso h = 0.1, selecciona el valor exacto de y(0.1) usando Euler Implícito.',
+    options: ['0.50', '0.00', '1.00', '0.20'],
+    hint: 'Sustituye h = 0.1 y λ = -10 en 1 / (1 - 0.1(-10)) = 1 / (1 + 1) = 1/2.',
+    solution: 'y_1 = 1 / (1 - 0.1(-10)) = 1 / 2 = 0.50.'
   },
 
-  // --- SALA 3: ESTABILIDAD Y TAMAÑO DE PASO ---
+  // ==========================================
+  // SALA 3: ESTABILIDAD Y TAMAÑO DE PASO (room: 2)
+  // ==========================================
   {
     room: 2,
     type: 'choice',
-    title: 'Región de Estabilidad Absoluta',
-    theory: 'Para la ecuación de prueba dy/dt = \\lambda y con \\lambda < 0, el factor de amplificación Q(h\\lambda) debe cumplir |Q(h\\lambda)| < 1.',
-    formula: 'Q(h\\lambda) = 1 + h\\lambda',
-    text: '¿Cuál es la condición sobre el paso h para que Euler Explícito sea estable si \\lambda = -10?',
+    title: 'Condición de Estabilidad Absoluta',
+    theory: 'Para la ecuación de prueba dy/dt = \\lambda y (con \\lambda < 0), el factor de amplificación Q(h\\lambda) debe cumplir |Q(h\\lambda)| < 1 para no oscilar o divergir.',
+    formula: 'Q(h\\lambda) = 1 + h\\lambda \\qquad |1 + h\\lambda| < 1',
+    text: '¿Cuál es el límite máximo del paso h para que el método de Euler Explícito sea estable si \\lambda = -10?',
     options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
-    hint: 'Resuelve la desigualdad |1 - 10h| < 1.',
-    solution: '-1 < 1 - 10h < 1 ⟹ 0 < 10h < 2 ⟹ h < 0.2.'
+    hint: 'Resuelve la desigualdad -1 < 1 - 10h < 1.',
+    solution: '-1 < 1 - 10h < 1 ⟹ -2 < -10h < 0 ⟹ h < 0.2.'
+  },
+  {
+    room: 2,
+    type: 'choice',
+    eulerSim: true, // Carga la simulación interactiva SVG en enhancements.js
+    title: 'Error de Truncamiento Global',
+    theory: 'Al aumentar el tamaño de paso h, las rectas tangentes se desvían más de la curva real, acumulando error de truncamiento global.',
+    formula: 'E_{local} = O(h^2) \\qquad E_{global} = O(h)',
+    text: 'Usa el control slider interactivo arriba. ¿Qué le sucede a la curva de Euler (punteada roja) respecto a la exacta (verde) al aumentar el paso h?',
+    options: [
+      'El error global de truncamiento aumenta y la aproximación se aleja de la solución real.',
+      'La solución numérica coincide perfectamente con la solución exacta.',
+      'El error disminuye porque el sistema realiza menos cálculos numéricos.',
+      'El método se vuelve incondicionalmente estable.'
+    ],
+    hint: 'Mueve el slider a h = 0.8 y observa la separación entre la línea punteada roja y la verde.',
+    solution: 'A mayor paso h, la aproximación lineal acumula un error global O(h) más pronunciado.'
   },
 
-  // --- SALA 4: RUNGE-KUTTA Y DIFERENCIAS FINITAS ---
+  // ==========================================
+  // SALA 4: RUNGE-KUTTA Y DIFERENCIAS FINITAS (room: 3)
+  // ==========================================
   {
     room: 3,
     type: 'choice',
     title: 'Orden del Método RK4',
-    theory: 'Los métodos de Runge-Kutta evalúan la función en puntos intermedios para lograr mayor precisión.',
-    formula: 'E_{global} = O(h^p)',
-    text: '¿Cuál es el orden del error global de truncamiento en el método de Runge-Kutta de 4º orden (RK4)?',
+    theory: 'Los métodos de Runge-Kutta evalúan pendientes intermedias (k1, k2, k3, k4) dentro de cada paso para obtener alta precisión.',
+    formula: 'y_{n+1} = y_n + \\frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)',
+    text: '¿Cuál es el orden del error global de truncamiento en el método de Runge-Kutta clásico (RK4)?',
     options: ['O(h⁴)', 'O(h²)', 'O(h)', 'O(h⁵)'],
-    hint: 'El error local es O(h⁵), pero el error acumulado global pierde un orden de h.',
-    solution: 'El error global de truncamiento para RK4 es O(h⁴).'
+    hint: 'Aunque el error local de un paso es O(h⁵), el error global acumulado pierde un orden.',
+    solution: 'El método RK4 tiene un error de truncamiento global de orden O(h⁴).'
+  },
+  {
+    room: 3,
+    type: 'search',
+    title: 'Aproximación por Diferencias Finitas',
+    theory: 'Las diferencias finitas sustituyen derivadas continuas por combinaciones discretas de nodos vecinales (fórmulas centradas, hacia adelante o hacia atrás).',
+    formula: 'y\'(t_n) \\approx \\frac{y_{n+1} - y_{n-1}}{2h}',
+    text: 'Usa la lupa para encontrar las fórmulas. ¿Cuál representa la aproximación en Diferencias Finitas Centradas para y\'(t_n)?',
+    options: [
+      'y\'(t_n) ≈ (y_{n+1} - y_{n-1}) / (2h)',
+      'y\'(t_n) ≈ (y_{n+1} - y_n) / h',
+      'y\'(t_n) ≈ (y_n - y_{n-1}) / h',
+      'y\'(t_n) ≈ (y_{n+1} + y_n) / 2'
+    ],
+    hint: 'Busca la expresión que evalúa los nodos a la izquierda (n-1) y a la derecha (n+1) divididos entre 2h.',
+    solution: 'La diferencia finita centrada usa el nodo posterior y anterior: (y_{n+1} - y_{n-1}) / (2h), logrando un error O(h²).'
   }
 ];
-{
-  room: 2,
-  type: 'choice',
-  eulerSim: true, // Indica a game.js que debe cargar el gráfico interactivo de Euler
-  title: 'Error de Truncamiento Local vs Global',
-  theory: 'Al aumentar el tamaño de paso h en el método de Euler, la pendiente estimada se aleja de la trayectoria real, acumulando error en cada paso.',
-  formula: 'E_{local} = O(h^2), \\qquad E_{global} = O(h)',
-  text: 'Observa la gráfica interactiva superior. ¿Qué sucede con la solución numérica de Euler a medida que incrementas el tamaño de paso h?',
-  options: [
-    'El error de truncamiento global aumenta y la solución se aleja de la exacta.',
-    'La solución numérica se vuelve idéntica a la solución exacta.',
-    'El error disminuye porque se realizan menos pasos de cálculo.',
-    'El método de Euler se convierte en un método implícito.'
-  ],
-  hint: 'Mueve el control deslizante de h hacia 0.8 en la gráfica y compara la línea roja punteada con la verde.',
-  solution: 'A mayor h, el error acumulado (global) aumenta notablemente debido a que la aproximación por recta tangente se vuelve imprecisa sobre intervalos más grandes.'
-}
