@@ -64,12 +64,12 @@
     if (timerEl) timerEl.textContent = format(remaining());
     if (!remaining() && stage !== 'dead' && stage !== 'finish') {
       account(); stage = 'dead'; stop(); saveAttempt();
-      modal.innerHTML = `<div class="modal-backdrop"><section class="death-modal"><h1>TIEMPO AGOTADO</h1><p>Se ha acabado el tiempo. Reintenta esta sala con un temporizador de 12 minutos.</p><button class="button button-primary" data-do="retry">Reintentar esta sala</button><button class="button button-secondary" data-do="end">Finalizar y descargar resultados</button></section></div>`;
+      modal.innerHTML = `<div class="modal-backdrop"><section class="death-modal"><h1>TIEMPO AGOTADO</h1><p>Se ha acabado el tiempo. Reintenta esta sala con un temporizador de 12 minutos.</p><button type="button" class="button button-primary" data-do="retry">Reintentar esta sala</button><button type="button" class="button button-secondary" data-do="end">Finalizar y descargar resultados</button></section></div>`;
     }
   }
 
   function startClock() { deadline = Date.now() + 720000; clock = setInterval(tick, 250); tick(); }
-  function account() { if (stage === 'question' && stepStarted && s.records[i]) { s.records[i].seconds += (Date.now() - stepStarted) / 1000; stepStarted = 0; } }
+  function account() { if (stage === 'question' && stepStarted && s && s.records && s.records[i]) { s.records[i].seconds += (Date.now() - stepStarted) / 1000; stepStarted = 0; } }
 
   function math(tex) {
     const node = document.createElement('span');
@@ -102,7 +102,8 @@
       t.split(/\\qquad|\s{3,}/).forEach(part => el.append(math(latex(part.trim()))));
     });
     app.querySelectorAll('.answer-option').forEach(el => {
-      if (['cards', 'search'].includes(questions[i].type) && !questions[i].eulerSim) el.replaceChildren(math(latex(el.textContent)));
+      const qList = window.ESCAPE_QUESTIONS || questions;
+      if (['cards', 'search'].includes(qList[i].type) && !qList[i].eulerSim) el.replaceChildren(math(latex(el.textContent)));
     });
     const walk = document.createTreeWalker(app, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -117,44 +118,44 @@
   }
 
   function frame(body) {
-    app.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${questions[i].room + 1} / 4 · ${titles[questions[i].room]} · PREGUNTA ${i + 1} / ${questions.length}</div>${body}</section>`;
+    const qList = window.ESCAPE_QUESTIONS || questions;
+    app.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${qList[i].room + 1} / 4 · ${titles[qList[i].room]} · PREGUNTA ${i + 1} / ${qList.length}</div>${body}</section>`;
     typeset();
   }
 
   function home() {
-  saveAttempt(); 
-  s = null; 
-  stop(); 
-  if (modal) modal.innerHTML = ''; 
-  stage = 'home'; 
-  
-  const timerChip = $('timer-chip');
-  if (timerChip) timerChip.hidden = true;
+    saveAttempt(); 
+    s = null; 
+    stop(); 
+    if (modal) modal.innerHTML = ''; 
+    stage = 'home'; 
+    const timerChip = $('timer-chip');
+    if (timerChip) timerChip.hidden = true;
 
-  app.innerHTML = `
-    <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; padding: 20px; text-align: center;">
-      <div style="max-width: 520px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <div class="eyebrow" style="color: #e8c882; font-weight: bold; letter-spacing: 1px; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
-        <h1 style="margin: 0 0 10px 0; font-size: 2em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
-        <p class="hero-lead" style="color: #a7a2b0; font-size: 0.95em; margin-bottom: 25px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
-        
-        <form id="entry" style="display: flex; flex-direction: column; gap: 18px; text-align: left;">
-          <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
-            <strong>Nombre y Apellido:</strong>
-            <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
-          </label>
-          <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
-            <strong>Curso / Grupo:</strong>
-            <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
-          </label>
-          <p class="lesson-footnote" style="font-size: 0.8em; color: #8a8599; margin: 0;">Descarga tus resultados al finalizar y entrégalos a tu instructor.</p>
-          <p style="font-size: 0.85em; color: #e8c882; margin: 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #e8c882;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
-          <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 5px; transition: background 0.2s;">Ingresar al manual →</button>
-        </form>
-      </div>
-    </section>
-  `;
-}
+    app.innerHTML = `
+      <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 20px; text-align: center;">
+        <div style="max-width: 500px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+          <div class="eyebrow" style="color: #e8c882; font-weight: bold; letter-spacing: 1px; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
+          <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
+          <p class="hero-lead" style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 20px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
+          
+          <form id="entry" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+            <label style="display: flex; flex-direction: column; gap: 5px; color: #ddd; font-size: 0.9em;">
+              <strong>Nombre y Apellido:</strong>
+              <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 5px; color: #ddd; font-size: 0.9em;">
+              <strong>Curso / Grupo:</strong>
+              <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+            </label>
+            <p style="font-size: 0.85em; color: #e8c882; margin: 5px 0 0 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #e8c882;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
+            <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 5px;">Ingresar al manual →</button>
+          </form>
+        </div>
+      </section>
+    `;
+  }
+
   function begin(form) {
     pausedAt = 0; 
     pausedTotal = 0; 
@@ -170,9 +171,9 @@
 
     if (!name || !block) return;
 
-    const questionsList = window.ESCAPE_QUESTIONS;
-    if (!questionsList || questionsList.length === 0) {
-      alert("Error: No se han encontrado las preguntas en rooms.js");
+    const qList = window.ESCAPE_QUESTIONS || questions;
+    if (!qList || qList.length === 0) {
+      alert("Error: No se han encontrado las preguntas de rooms.js");
       return;
     }
 
@@ -184,7 +185,7 @@
       retries: 0, 
       penalty: 0, 
       finalErrors: 0,
-      records: questionsList.map((q, j) => ({ 
+      records: qList.map((q, j) => ({ 
         question: j + 1, 
         room: q.room + 1, 
         type: q.type, 
@@ -210,13 +211,20 @@
     saveAttempt();
   }
 
+  // Hacer la función de inicio accesible globalmente
+  window.beginGame = begin;
+
   function lesson() {
-    account(); stage = 'lesson'; const q = questions[i];
-    frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">NOTA DE CAMPO</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button class="button button-primary" data-do="question">Probar el candado →</button></div>`);
+    account(); stage = 'lesson'; 
+    const qList = window.ESCAPE_QUESTIONS || questions;
+    const q = qList[i];
+    frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">NOTA DE CAMPO</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button type="button" class="button button-primary" data-do="question">Probar el candado →</button></div>`);
   }
 
   function question() {
-    stage = 'question'; stepStarted = Date.now(); const q = questions[i];
+    stage = 'question'; stepStarted = Date.now(); 
+    const qList = window.ESCAPE_QUESTIONS || questions;
+    const q = qList[i];
     order = q.options ? q.options.map((text, index) => ({ text, index })).sort(() => Math.random() - .5) : [];
     let body = '';
 
@@ -226,20 +234,9 @@
       body = `<label>Selecciona la respuesta<select id="dial">${order.map((o, n) => `<option value="${n}">${o.text}</option>`).join('')}</select></label><button type="button" class="button button-primary" data-do="dial">Desbloquear</button>`;
     } else if (q.type === 'search') {
       const spots = [[16, 22], [73, 20], [25, 75], [76, 70]].sort(() => Math.random() - .5);
-      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button class="answer-option formula-card" style="left:${spots[n][0]}\%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
+      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
     } else {
       body = `<div class="answer-list" id="choices">${order.map((o, n) => `<button type="button" class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
     }
 
-    frame(`<div class="challenge-card"><div class="challenge-label">${q.type === 'search' ? 'INSCRIPCIONES OCULTAS' : 'EL CANDADO'}</div><h1>${q.text}</h1>${q.type === 'search' ? '<div id="magnifier-controls"><p>Mueve el puntero para iluminar las opciones y selecciona la correcta.</p><button type="button" class="button button-secondary" data-do="lens">⌕ Usar lupa</button></div>' : '<div id="magnifier-controls"></div>'}${body}<p id="feedback" role="status" style="color:var(--gold);min-height:2em"></p><button type="button" class="back-link" data-do="lesson">← Revisar la nota de campo</button></div>`);
-
-    if (q.eulerSim && window.mountEulerSimulation) {
-      window.mountEulerSimulation($('magnifier-controls'), () => stage === 'question');
-      const bank = document.createElement('p');
-      bank.setAttribute('role', 'status');
-      bank.style.color = '#e8c882';
-      bank.textContent = 'Ajusta el slider de h para observar la acumulación del error de truncamiento.';
-      $('choices').before(bank);
-    }
-
-    if (q.type === 'search') {
+    frame(`<div class="challenge-card"><div class="challenge-label">${q.type === 'search
