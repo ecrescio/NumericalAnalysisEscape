@@ -11,7 +11,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Hojas de estilo -->
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -47,43 +46,12 @@
     <span>Diseñado por Mario Estrada</span>
   </footer>
 
-  <!-- Cargar KaTeX de CDN -->
+  <!-- Librerías y Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 
-  <!-- Compatibilidad de Rutas: Intenta cargar desde la misma carpeta y desde assets/js/ -->
-  <script src="assets/js/rooms.js" onerror="this.onerror=null;this.src='assets/js/rooms.js';"></script>
-  <script src="assets/js/enhancements.js" onerror="this.onerror=null;this.src='assets/js/enhancements.js';"></script>
-  <script src="assets/js/game.js" onerror="this.onerror=null;this.src='assets/js/game.js';"></script>
-
-  <!-- Carga directa limpia de la pantalla inicial -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const app = document.getElementById('app');
-      setTimeout(() => {
-        if (app && app.children.length === 0) {
-          app.innerHTML = `
-            <section style="max-width: 480px; width: 100%; background: #1a1829; padding: 35px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
-              <div style="color: #e8c882; font-weight: bold; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
-              <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
-              <p style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 25px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
-              
-              <form id="entry" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
-                <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
-                  <strong>Nombre y Apellido:</strong>
-                  <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
-                </label>
-                <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
-                  <strong>Curso / Grupo:</strong>
-                  <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
-                </label>
-                <p style="font-size: 0.85em; color: #e8c882; margin: 5px 0 0 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
-                <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 10px;">Ingresar al manual →</button>
-              </form>
-            </section>
-          `;
-        }
-      }, 300);
-    });
-  </script>
+  <!-- Carga flexible de scripts (raíz o assets/js/) -->
+  <script src="rooms.js" onerror="this.onerror=null;this.src='assets/js/rooms.js';"></script>
+  <script src="enhancements.js" onerror="this.onerror=null;this.src='assets/js/enhancements.js';"></script>
+  <script src="game.js" onerror="this.onerror=null;this.src='assets/js/game.js';"></script>
 </body>
 </html>
