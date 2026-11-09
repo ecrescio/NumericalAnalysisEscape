@@ -1,36 +1,164 @@
 /* Local, synthesized audio. No recordings or external audio services. */
-window.gameAudio=(()=>{let ctx,enabled=true,master;function unlock(){if(!enabled)return;try{if(!ctx){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;ctx=new Audio();master=ctx.createGain();master.gain.value=.22;master.connect(ctx.destination);}if(ctx.state==='suspended')ctx.resume().catch(()=>{});}catch{}}
-function tone(f,d=.3,type='sine',delay=0,end=f){if(!enabled)return;unlock();if(!ctx)return;const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,end),t+d);g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.3,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.02);o.onended=()=>{o.disconnect();g.disconnect();};}
-return {init(button){const update=()=>{button.hidden=false;button.textContent=enabled?'♫ Sound on':'♫ Sound off';button.title=enabled?'Mute sounds':'Enable sounds';button.setAttribute('aria-label',button.title);button.setAttribute('aria-pressed',String(enabled));};button.onclick=()=>{enabled=!enabled;if(master)master.gain.value=enabled?.22:0;unlock();update();};document.addEventListener('pointerdown',unlock,{capture:true});document.addEventListener('keydown',unlock,{capture:true});update();},bell(n){tone([392,494,587,784][n],.55);},effect(kind){if(kind==='success')[523,659,784].forEach((f,n)=>tone(f,.3,'sine',n*.1));else if(kind==='error')tone(180,.5,'triangle',0,45);else if(kind==='spell')tone(620,.12,'triangle',0,120);else if(kind==='brew')Array.from({length:8},(_,n)=>tone(100+n%3*60,.12,'sine',n*.09,240+n*20));}};})();
+window.gameAudio = (() => {
+  let ctx, enabled = true, master;
+  function unlock() {
+    if (!enabled) return;
+    try {
+      if (!ctx) {
+        const Audio = window.AudioContext || window.webkitAudioContext;
+        if (!Audio) return;
+        ctx = new Audio();
+        master = ctx.createGain();
+        master.gain.value = .22;
+        master.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    } catch {}
+  }
+  function tone(f, d = .3, type = 'sine', delay = 0, end = f) {
+    if (!enabled) return;
+    unlock();
+    if (!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + delay;
+    o.type = type;
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, end), t + d);
+    g.gain.setValueAtTime(.001, t);
+    g.gain.exponentialRampToValueAtTime(.3, t + .015);
+    g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + d + .02);
+    o.onended = () => {
+      o.disconnect();
+      g.disconnect();
+    };
+  }
+  return {
+    init(button) {
+      const update = () => {
+        button.hidden = false;
+        button.textContent = enabled ? '♫ Sonido: ON' : '♫ Sonido: OFF';
+        button.title = enabled ? 'Silenciar sonidos' : 'Activar sonidos';
+        button.setAttribute('aria-label', button.title);
+        button.setAttribute('aria-pressed', String(enabled));
+      };
+      button.onclick = () => {
+        enabled = !enabled;
+        if (master) master.gain.value = enabled ? .22 : 0;
+        unlock();
+        update();
+      };
+      document.addEventListener('pointerdown', unlock, { capture: true });
+      document.addEventListener('keydown', unlock, { capture: true });
+      update();
+    },
+    bell(n) {
+      tone([392, 494, 587, 784][n], .55);
+    },
+    effect(kind) {
+      if (kind === 'success') [523, 659, 784].forEach((f, n) => tone(f, .3, 'sine', n * .1));
+      else if (kind === 'error') tone(180, .5, 'triangle', 0, 45);
+      else if (kind === 'spell') tone(620, .12, 'triangle', 0, 120);
+      else if (kind === 'brew') Array.from({ length: 8 }, (_, n) => tone(100 + n % 3 * 60, .12, 'sine', n * .09, 240 + n * 20));
+    }
+  };
+})();
 
-window.mountPendulum=function(graph,isActive){
- const ns='http://www.w3.org/2000/svg',panel=document.createElement('div');panel.className='pendulum-simulation';panel.innerHTML=`<p>Ideal pendulum · small-angle model · no friction. The red markers follow the same instant on both energy curves.</p><svg viewBox="0 0 300 235" aria-label="Animated pendulum; A is the left turning point and B is the lowest point" role="img"><path d="M75 25H225" stroke="#a7a2b0" stroke-width="5"/><line id="pendulum-rod" x1="150" y1="25" x2="110" y2="221" stroke="#e8c882" stroke-width="3"/><circle id="pendulum-bob" cx="110" cy="221" r="11" fill="#b8a6ff"/><text x="88" y="215" fill="white">A</text><text x="162" y="230" fill="white">B</text></svg><div class="pendulum-controls"><button type="button" class="button" id="pendulum-play" aria-label="Play" title="Play">▶</button><button type="button" class="button" id="pendulum-reset" aria-label="Reset" title="Reset">↺</button><label>Time / period<input id="pendulum-time" type="range" min="0" max="1" step=".001" value="0"></label></div>`;
- graph.before(panel);panel.append(graph);const make=(tag,attrs)=>{const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));graph.append(e);return e;};const guide=make('line',{y1:30,y2:200,stroke:'#ff6270','stroke-dasharray':'4 4'}),ug=make('circle',{r:6,fill:'#ff4355',stroke:'white','stroke-width':1.5}),ke=make('circle',{r:6,fill:'#ff4355',stroke:'white','stroke-width':1.5});
- const rod=panel.querySelector('#pendulum-rod'),bob=panel.querySelector('#pendulum-bob'),play=panel.querySelector('#pendulum-play'),reset=panel.querySelector('#pendulum-reset'),slider=panel.querySelector('#pendulum-time');let phase=0,running=false,last=0,raf=0;
- function draw(){const c=Math.cos(2*Math.PI*phase),theta=-.2*c,x=150+200*Math.sin(theta),y=25+200*Math.cos(theta),px=50+400*phase;rod.setAttribute('x2',x);rod.setAttribute('y2',y);bob.setAttribute('cx',x);bob.setAttribute('cy',y);guide.setAttribute('x1',px);guide.setAttribute('x2',px);ug.setAttribute('cx',px);ug.setAttribute('cy',200-150*c*c);ke.setAttribute('cx',px);ke.setAttribute('cy',200-150*(1-c*c));slider.value=phase;}
- function loop(t){if(!panel.isConnected||!isActive()){running=false;return;}if(!running)return;if(last)phase=(phase+(t-last)/6000)%1;last=t;draw();raf=requestAnimationFrame(loop);}
- play.onclick=()=>{running=!running;play.textContent=running?'⏸':'▶';play.title=running?'Pause':'Play';play.setAttribute('aria-label',play.title);last=0;cancelAnimationFrame(raf);if(running)raf=requestAnimationFrame(loop);};reset.onclick=()=>{running=false;cancelAnimationFrame(raf);phase=0;last=0;play.textContent='▶';play.title='Play';play.setAttribute('aria-label','Play');draw();};slider.oninput=()=>{running=false;cancelAnimationFrame(raf);play.textContent='▶';play.title='Play';play.setAttribute('aria-label','Play');phase=Number(slider.value);draw();};draw();
+/* Simulación interactiva de Métodos Numéricos (IVP: dy/dt = -y, y(0) = 1) */
+window.mountEulerSimulation = function(anchor, isActive) {
+  const panel = document.createElement('section');
+  panel.className = 'euler-simulation';
+  
+  panel.innerHTML = `
+    <div style="background: #181623; border: 1px solid #302a45; padding: 16px; border-radius: 8px; margin-bottom: 20px; color: #e1dfeb;">
+      <p style="margin-top:0;"><strong>Simulación IVP:</strong> $dy/dt = -y$, con $y(0) = 1$. Compara la solución exacta $y(t) = e^{-t}$ con el Método de Euler Explícito.</p>
+      <div class="euler-controls" style="margin: 12px 0; display: flex; gap: 15px; align-items: center; color: #fff;">
+        <label style="display: flex; align-items: center; gap: 10px;">Tamaño de paso ($h$): 
+          <input class="euler-h" type="range" min="0.05" max="0.8" step="0.05" value="0.2" style="cursor: pointer;">
+          <span class="h-val" style="font-weight: bold; color: #e8c882; min-width: 35px;">0.20</span>
+        </label>
+      </div>
+      <svg class="euler-scene" viewBox="0 0 500 240" role="img" aria-label="Comparación de Euler vs Solución Exacta" style="width: 100%; background: #0f0d17; border-radius: 6px; display: block;">
+        <!-- Ejes -->
+        <path d="M 40 20 V 200 H 480" fill="none" stroke="#555" stroke-width="2"/>
+        <text x="475" y="225" fill="#aaa" font-size="12">t</text>
+        <text x="15" y="25" fill="#aaa" font-size="12">y(t)</text>
+        
+        <!-- Curva Exacta -->
+        <path class="curve-exact" fill="none" stroke="#73dcca" stroke-width="2.5"/>
+        
+        <!-- Curva Euler -->
+        <path class="curve-euler" fill="none" stroke="#ff6270" stroke-width="2" stroke-dasharray="4 4"/>
+        <g class="euler-nodes"></g>
+      </svg>
+      <div style="display: flex; gap: 20px; font-size: 13px; margin-top: 10px;">
+        <span style="color: #73dcca; font-weight: 500;">― Solución Exacta ($e^{-t}$)</span>
+        <span style="color: #ff6270; font-weight: 500;">- - Método de Euler</span>
+      </div>
+    </div>
+  `;
+  
+  anchor.before(panel);
+  
+  const svg = panel.querySelector('.euler-scene');
+  const pathExact = panel.querySelector('.curve-exact');
+  const pathEuler = panel.querySelector('.curve-euler');
+  const nodesGroup = panel.querySelector('.euler-nodes');
+  const sliderH = panel.querySelector('.euler-h');
+  const spanH = panel.querySelector('.h-val');
+  
+  // Mapeo de coordenadas del problema a las coordenadas SVG
+  // t: [0, 4] -> X: [40, 460]
+  // y: [0, 1.2] -> Y: [200, 30]
+  const mapX = t => 40 + (t / 4) * 420;
+  const mapY = y => 200 - (y / 1.2) * 170;
+  
+  // 1. Dibujar Solución Exacta
+  let dExact = '';
+  for (let i = 0; i <= 100; i++) {
+    const t = (i / 100) * 4;
+    const y = Math.exp(-t);
+    dExact += `${i === 0 ? 'M' : 'L'} ${mapX(t)} ${mapY(y)} `;
+  }
+  pathExact.setAttribute('d', dExact);
+  
+  // 2. Actualizar Aproximación de Euler dinámicamente según 'h'
+  function updateEuler() {
+    const h = parseFloat(sliderH.value);
+    spanH.textContent = h.toFixed(2);
+    
+    let t = 0;
+    let y = 1.0;
+    let dEuler = `M ${mapX(t)} ${mapY(y)}`;
+    
+    nodesGroup.innerHTML = `<circle cx="${mapX(t)}" cy="${mapY(y)}" r="4" fill="#ff6270"/>`;
+    
+    while (t < 4) {
+      // Método de Euler Explícito para dy/dt = -y => y_{n+1} = y_n + h * (-y_n)
+      const f = -y;
+      y = y + h * f;
+      t = t + h;
+      
+      const px = mapX(t);
+      const py = mapY(y);
+      
+      dEuler += ` L ${px} ${py}`;
+      
+      const node = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      node.setAttribute('cx', px);
+      node.setAttribute('cy', py);
+      node.setAttribute('r', '4');
+      node.setAttribute('fill', '#ff6270');
+      nodesGroup.appendChild(node);
+    }
+    
+    pathEuler.setAttribute('d', dEuler);
+  }
+  
+  sliderH.oninput = updateEuler;
+  updateEuler();
 };
-
-window.mountSpring=function(anchor,isActive){
- const panel=document.createElement('section');panel.className='spring-simulation';
- panel.innerHTML=`<p>Ideal horizontal spring · no friction · released from rest at +A. Animation slowed for observation.</p><svg class="spring-scene" viewBox="0 0 540 175" role="img" aria-label="Horizontal spring oscillating about equilibrium"><path d="M35 20V125M35 125H505" fill="none" stroke="#aaa" stroke-width="3"/><path class="coil" fill="none" stroke="#e8c882" stroke-width="3"/><line x1="300" y1="25" x2="300" y2="130" stroke="#aaa" stroke-dasharray="4 4"/><rect class="mass" y="55" width="44" height="50" rx="7" fill="#b8a6ff"/><g fill="#f9f4e9" font-size="15" text-anchor="middle"><text x="200" y="150">−A</text><text x="300" y="150">x = 0</text><text x="400" y="150">+A</text></g></svg><div class="pendulum-controls"><button type="button" class="button sim-play" title="Play" aria-label="Play">▶</button><button type="button" class="button sim-reset" title="Reset" aria-label="Reset">↺</button><label>Time / period<input class="sim-time" type="range" min="0" max="1" step="0.001" value="0"></label></div><svg class="spring-energy" viewBox="0 0 540 260" role="img" aria-label="Qualitative energy versus time: kinetic and elastic potential energy exchange, mechanical energy stays constant"></svg>`;
- anchor.before(panel);
- const svg=panel.querySelector('.spring-energy'),ns='http://www.w3.org/2000/svg';
- function add(tag,attrs,text){const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text)e.textContent=text;svg.append(e);return e;}
- add('path',{d:'M50 45V215H500',fill:'none',stroke:'#aaa'});
- add('text',{x:50,y:20,fill:'#fff','font-size':14},'Energy (qualitative)');add('text',{x:405,y:250,fill:'#fff','font-size':14},'Time / period');
- [0,.25,.5,.75,1].forEach(t=>add('text',{x:50+450*t,y:235,fill:'#ddd','text-anchor':'middle','font-size':12},String(t)));
- const colors=['#73dcca','#c5adff','#e8c882'],names=['Kinetic energy (K)','Elastic potential energy (Uₑ)','Mechanical energy (Eₘ)'];
- const funcs=[p=>Math.sin(2*Math.PI*p)**2,p=>Math.cos(2*Math.PI*p)**2,()=>1];
- funcs.forEach((f,j)=>{const d=Array.from({length:241},(_,n)=>`${n?'L':'M'}${50+450*n/240},${215-150*f(n/240)}`).join(' ');add('path',{d,fill:'none',stroke:colors[j],'stroke-width':2.5,...(j===2?{'stroke-dasharray':'6 5'}:{})});});
- const guide=add('line',{y1:45,y2:215,stroke:'#ff4355','stroke-dasharray':'4 4'}),dots=funcs.map(()=>add('circle',{r:5,fill:'#ff4355',stroke:'#fff','stroke-width':1.5}));
- const legend=document.createElement('div');legend.className='energy-legend';names.forEach((name,j)=>{const item=document.createElement('span');item.textContent=name;item.style.color=colors[j];legend.append(item);});panel.append(legend);
- const coil=panel.querySelector('.coil'),mass=panel.querySelector('.mass'),play=panel.querySelector('.sim-play'),slider=panel.querySelector('.sim-time');let phase=0,running=false,last=0,raf=0;
- function draw(){const x=300+100*Math.cos(2*Math.PI*phase),end=x-22;mass.setAttribute('x',end);let d='M35 80L50 80';for(let n=0;n<=20;n++)d+=`L${50+(end-65)*n/20} ${n===0||n===20?80:n%2?67:93}`;coil.setAttribute('d',d+`L${end} 80`);const px=50+450*phase;guide.setAttribute('x1',px);guide.setAttribute('x2',px);dots.forEach((dot,j)=>{dot.setAttribute('cx',px);dot.setAttribute('cy',215-150*funcs[j](phase));});slider.value=phase;}
- function status(){play.textContent=running?'⏸':'▶';play.title=running?'Pause':'Play';play.setAttribute('aria-label',play.title);}
- function pause(){running=false;last=0;cancelAnimationFrame(raf);status();}
- function loop(t){if(!panel.isConnected||!isActive()){pause();return;}if(!running)return;if(last)phase=(phase+(t-last)/6000)%1;last=t;draw();raf=requestAnimationFrame(loop);}
- play.onclick=()=>{if(running)pause();else{running=true;last=0;status();raf=requestAnimationFrame(loop);}};
- panel.querySelector('.sim-reset').onclick=()=>{pause();phase=0;draw();};slider.oninput=()=>{pause();phase=Number(slider.value);draw();};draw();
-};
+enhancements.js
+Mostrando enhancements.js.
