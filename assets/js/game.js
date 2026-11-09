@@ -269,22 +269,37 @@
   }
 
   document.addEventListener('submit', e => {
-    e.preventDefault(); if (Date.now() < hitUntil) return;
-    if (e.target.id === 'entry') begin(e.target);
-    if (e.target.id === 'numeric') {
-      const raw = $('number').value.trim().replace(',', '.');
-      if (!raw || !Number.isFinite(Number(raw))) { $('feedback').textContent = 'Ingresa un valor numérico válido.'; return; }
-      answer(raw, Math.abs(Number(raw) - questions[i].value) < 0.0005);
-    }
-    if (e.target.id === 'exit') {
-      if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
-      else {
-        s.finalErrors++; s.penalty += 20; deadline -= 20000; attack();
-        $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; tick();
-      }
-    }
-  });
+  e.preventDefault();
+  
+  // Si estamos en la pantalla de inicio, no aplica la penalización de tiempo/hitUntil
+  if (e.target.id === 'entry') {
+    begin(e.target);
+    return;
+  }
 
+  if (Date.now() < hitUntil) return;
+
+  if (e.target.id === 'numeric') {
+    const raw = $('number').value.trim().replace(',', '.');
+    if (!raw || !Number.isFinite(Number(raw))) { 
+      $('feedback').textContent = 'Ingresa un valor numérico válido.'; 
+      return; 
+    }
+    answer(raw, Math.abs(Number(raw) - questions[i].value) < 0.0005);
+  }
+  
+  if (e.target.id === 'exit') {
+    if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
+    else {
+      s.finalErrors++; 
+      s.penalty += 20; 
+      deadline -= 20000; 
+      attack();
+      $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; 
+      tick();
+    }
+  }
+});
   document.addEventListener('click', e => {
     if (Date.now() < hitUntil) return;
     const b = e.target.closest('[data-do]'); if (!b) return;
