@@ -126,5 +126,4 @@
   function frame(body) {
     const mainApp = app();
     const qList = window.ESCAPE_QUESTIONS || [];
-    if (!mainApp || !qList[i]) return;
-    mainApp.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${qList[i].room + 1} / 4 ·${titles[qList[i].room]} · PRE
+    if (!mainApp || !qList[i]) return
