@@ -120,18 +120,57 @@
   }
 
   function begin(form) {
-    pausedAt = 0; pausedTotal = 0; hitUntil = 0;
-    const name = form.querySelector('[name="participant"]').value.trim(), block = form.querySelector('[name="block"]').value.trim();
-    if (!name || !block) return;
-    s = {
-      name, block, id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      start: Date.now(), retries: 0, penalty: 0, finalErrors: 0,
-      records: questions.map((q, j) => ({ question: j + 1, room: q.room + 1, type: q.type, title: q.title, attempts: 0, errors: 0, firstCorrect: null, solved: false, seconds: 0, responses: [] }))
-    };
-    i = 0; $('timer-chip').removeAttribute('hidden'); $('timer').textContent = '12:00';
-    lesson(); startClock(); saveAttempt();
+  pausedAt = 0; 
+  pausedTotal = 0; 
+  hitUntil = 0;
+
+  const nameInput = form.querySelector('[name="participant"]');
+  const blockInput = form.querySelector('[name="block"]');
+
+  if (!nameInput || !blockInput) return;
+
+  const name = nameInput.value.trim();
+  const block = blockInput.value.trim();
+
+  if (!name || !block) return;
+
+  // Inicializar objeto de sesión del estudiante
+  s = {
+    name, 
+    block, 
+    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    start: Date.now(), 
+    retries: 0, 
+    penalty: 0, 
+    finalErrors: 0,
+    records: questions.map((q, j) => ({ 
+      question: j + 1, 
+      room: q.room + 1, 
+      type: q.type, 
+      title: q.title, 
+      attempts: 0, 
+      errors: 0, 
+      firstCorrect: null, 
+      solved: false, 
+      seconds: 0, 
+      responses: [] 
+    }))
+  };
+
+  i = 0;
+  
+  // Mostrar temporizador en el topbar
+  const timerChip = $('timer-chip');
+  if (timerChip) {
+    timerChip.removeAttribute('hidden');
+    $('timer').textContent = '12:00';
   }
 
+  // Guardar estado inicial y cambiar de pantalla a la lección
+  saveAttempt();
+  lesson(); 
+  startClock();
+}
   function lesson() {
     account(); stage = 'lesson'; const q = questions[i];
     frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">NOTA DE CAMPO</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button class="button button-primary" data-do="question">Probar el candado →</button></div>`);
