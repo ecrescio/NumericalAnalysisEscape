@@ -1,11 +1,97 @@
-window.ESCAPE_QUESTIONS=[
-{room:0,type:'choice',title:'Read the motion trace',theory:"During a video analysis, you record an object's position at different times. Average velocity over a time interval is the object's displacement divided by the elapsed time.",formula:'v_{avg} = Δx / Δt',text:'An object moves from x = 0.4 m to x = 2.0 m in 0.8 s. What is its average velocity?',options:['2.0 m/s','0.5 m/s','1.6 m/s','2.4 m/s'],hint:'Subtract the initial position from the final position before dividing by time.',solution:'(2.0 − 0.4) / 0.8 = 2.0 m/s.'},
-{room:1,type:'choice',title:'Follow the pendulum',theory:'Gravitational potential energy depends on height above a chosen reference. Kinetic energy depends on speed. In an ideal pendulum, their sum is constant.',formula:'U_g = mgh \\qquad K = ½mv²',text:'As an ideal pendulum descends, how do its energies change?',options:['K increases; U_g decreases','Both increase','K decreases; U_g increases','Both remain constant'],hint:'The bob gets lower and moves faster.',solution:'Height decreases while speed increases: gravitational potential energy becomes kinetic energy.'},
-{room:1,type:'cards',title:'Choose the gravitational inscription',theory:'Choose a reference height and use it consistently. Gravitational potential energy near Earth is mass × gravitational acceleration × height.',formula:'U_g = mgh',text:'Which equation represents gravitational potential energy?',options:['U_g = mgh','U_e = ½k(Δx)²','K = ½mv²','F = -kx'],hint:'Look for mass, gravity, and height together.',solution:'U_g = mgh.'},
-{room:1,type:'number',title:'Unlock the kinetic vault',theory:'For motion in two dimensions, both velocity components contribute to speed. Use this speed when calculating kinetic energy.',formula:'v² = v_x² + v_y² \\qquad K = ½m(v_x² + v_y²)',text:'A 0.50 kg bob has v_x = 0.30 m/s and v_y = 0.40 m/s. Enter its kinetic energy in joules.',value:0.0625,hint:'Square both components, add them, and multiply by half the mass.',solution:'K = ½(0.50)(0.30² + 0.40²) = 0.0625 J.'},
-{room:2,type:'dial',title:'The lost-height lock',theory:'At the top of each vertical bounce, speed is approximately zero. The positive decrease in mechanical energy between two maxima is mg(h₁ − h₂). This includes losses during flight and impact.',formula:'E_m = K + U_g \\qquad energy decrease = mg(h₁ − h₂)',text:'A 0.25 kg ball reaches 1.2 m, then 0.8 m. What is its mechanical-energy decrease? Use g = 9.8 m/s².',options:['0.98 J','0.49 J','1.96 J','2.94 J'],hint:'Use the difference between the maximum heights, not either height alone.',solution:'0.25 × 9.8 × (1.2 − 0.8) = 0.98 J.'},
-{room:2,type:'choice',title:'Explain the evidence',theory:'Mechanical energy is kinetic plus potential energy. A decrease can correspond to thermal energy, sound, or energy transferred to the surroundings. Total energy is conserved when the energy balance includes all relevant forms and transfers.',formula:'Mechanical energy ≠ all forms of energy',text:'The ball reaches a lower height after each bounce. Which explanation is supported?',options:['Mechanical energy decreases; total energy is conserved when surroundings and other energy forms are included.','Total energy is destroyed during impact.','The ball must lose mass after each bounce.','Gravity stops acting after the first impact.'],hint:'Distinguish mechanical energy from total energy.',solution:'Include energy transferred to the floor and air, and energy transformed into thermal energy and sound.'},
-{room:3,type:'graph',title:'Read the spring graph',theory:'Measure the applied force and elongation at each static equilibrium. The graph shows applied force, which balances the spring force. Its slope is positive and equals k. Here Δx is elongation from the natural length; in the oscillation model, x is displacement from equilibrium.',formula:'F_{applied} = kΔx \\qquad k = \\frac{F_{applied}}{Δx}',text:'Use the applied-force–elongation graph. What is the spring constant?',options:['200 N/m','20 N/m','2 N/m','0.2 N/m'],hint:'Calculate the rise in force divided by the rise in elongation.',solution:'k = (6 − 2) / (0.03 − 0.01) = 200 N/m.'},
-{room:3,type:'cards',title:'Choose the elastic inscription',theory:'Elastic potential energy depends on the square of deformation from the spring’s natural length. For a vertical mass–spring system, include both gravitational and elastic potential energy.',formula:'U_e = ½k(Δx)² \\qquad E_m = K + U_g + U_e',text:'Which equation represents elastic potential energy?',options:['U_e = ½k(Δx)²','U_g = mgh','K = ½mv²','F = -kx'],hint:'Look for the spring constant and squared deformation.',solution:'U_e = ½k(Δx)², with Δx measured from the natural length.'},
-{"room": 3, "type": "search", "spring": true, "title": "The spring speed spell", "theory": "An ideal horizontal spring exchanges elastic potential energy and kinetic energy without friction. Displacement x is measured from equilibrium, where the spring has its natural length. The mass is released from rest at x = A.", "formula": "E_m = K + U_e", "text": "Find the hidden measurements. Calculate the maximum speed as the mass passes through equilibrium (x = 0).", "options": ["Mass: 0.80 kg", "Spring constant: 180 N/m", "Amplitude: 0.10 m"], "value": 1.5, "hint": "Conserve mechanical energy: K₁ + U₁ = K₂ + U₂. The mass starts from rest; at equilibrium the horizontal spring is undeformed.", "solution": "At release, K₁ = 0 and U₁ = ½(180)(0.10)² = 0.90 J. At equilibrium, U₂ = 0, so ½(0.80)v² = 0.90 J. The maximum speed is 1.5 m/s."}
+window.ESCAPE_QUESTIONS = [
+  // --- SALA 1: EULER EXPLÍCITO ---
+  {
+    room: 0,
+    type: 'choice',
+    title: 'Paso de Integración de Euler',
+    theory: 'El método de Euler aproximó la solución de dy/dt = f(t,y) avanzando mediante la tangente en el punto actual.',
+    formula: 'y_{n+1} = y_n + h \\cdot f(t_n, y_n)',
+    text: 'Dada dy/dt = 2t + y con y(0) = 1 y un paso h = 0.1, ¿cuál es el valor aproximado de y(0.1)?',
+    options: ['1.10', '1.20', '1.05', '1.15'],
+    hint: 'Calcula f(0, 1) = 2(0) + 1 = 1. Luego y_1 = 1 + 0.1(1).',
+    solution: 'f(0,1) = 1. Por lo tanto, y(0.1) ≈ 1 + 0.1(1) = 1.10.'
+  },
+  {
+    room: 0,
+    type: 'number',
+    title: 'El Candado Numérico de Euler',
+    theory: 'Aplica el método de Euler paso a paso.',
+    formula: 'y_{n+1} = y_n + h \\cdot f(t_n, y_n)',
+    text: 'Para dy/dt = -y con y(0) = 2 y h = 0.2, ingresa el valor calculado para y(0.2).',
+    value: 1.6, // Calculado como: 2 + 0.2*(-2) = 1.6
+    hint: 'Sustituye t_0 = 0, y_0 = 2 en la ecuación diferencial.',
+    solution: 'y_1 = 2 + 0.2(-2) = 1.6.'
+  },
+
+  // --- SALA 2: HEUN Y EULER IMPLÍCITO ---
+  {
+    room: 1,
+    type: 'choice',
+    title: 'Fórmula del Predictor-Corrector (Heun)',
+    theory: 'El método de Heun promedia las pendientes al inicio y al final del intervalo.',
+    formula: 'y_{n+1} = y_n + \\frac{h}{2} [f(t_n, y_n) + f(t_{n+1}, y_{n+1}^0)]',
+    text: '¿Qué método utiliza Heun para obtener la predicción inicial y_{n+1}^0?',
+    options: ['Euler Explícito', 'Euler Implícito', 'Runge-Kutta de 4º orden', 'Diferencias Finitas'],
+    hint: 'Es el método explícito más simple para predecir el siguiente valor.',
+    solution: 'Heun usa Euler explícito como paso predictor.'
+  },
+  {
+    room: 1,
+    type: 'choice',
+    title: 'Ecuaciones Implícitas',
+    theory: 'En el método de Euler Implícito la derivada se evalúa en el punto futuro t_{n+1}.',
+    formula: 'y_{n+1} = y_n + h \\cdot f(t_{n+1}, y_{n+1})',
+    text: 'Para la ODE rígida (stiff) dy/dt = -50y, ¿cuál es la ecuación algebraica para y_{n+1} en Euler Implícito?',
+    options: [
+      'y_{n+1} = \\frac{y_n}{1 + 50h}',
+      'y_{n+1} = y_n (1 - 50h)',
+      'y_{n+1} = \\frac{y_n}{1 - 50h}',
+      'y_{n+1} = y_n + 50h'
+    ],
+    hint: 'Sustituye f(t_{n+1}, y_{n+1}) = -50 y_{n+1} y despeja y_{n+1}.',
+    solution: 'y_{n+1} = y_n - 50h y_{n+1} ⟹ y_{n+1}(1 + 50h) = y_n.'
+  },
+
+  // --- SALA 3: ESTABILIDAD Y TAMAÑO DE PASO ---
+  {
+    room: 2,
+    type: 'choice',
+    title: 'Región de Estabilidad Absoluta',
+    theory: 'Para la ecuación de prueba dy/dt = \\lambda y con \\lambda < 0, el factor de amplificación Q(h\\lambda) debe cumplir |Q(h\\lambda)| < 1.',
+    formula: 'Q(h\\lambda) = 1 + h\\lambda',
+    text: '¿Cuál es la condición sobre el paso h para que Euler Explícito sea estable si \\lambda = -10?',
+    options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
+    hint: 'Resuelve la desigualdad |1 - 10h| < 1.',
+    solution: '-1 < 1 - 10h < 1 ⟹ 0 < 10h < 2 ⟹ h < 0.2.'
+  },
+
+  // --- SALA 4: RUNGE-KUTTA Y DIFERENCIAS FINITAS ---
+  {
+    room: 3,
+    type: 'choice',
+    title: 'Orden del Método RK4',
+    theory: 'Los métodos de Runge-Kutta evalúan la función en puntos intermedios para lograr mayor precisión.',
+    formula: 'E_{global} = O(h^p)',
+    text: '¿Cuál es el orden del error global de truncamiento en el método de Runge-Kutta de 4º orden (RK4)?',
+    options: ['O(h⁴)', 'O(h²)', 'O(h)', 'O(h⁵)'],
+    hint: 'El error local es O(h⁵), pero el error acumulado global pierde un orden de h.',
+    solution: 'El error global de truncamiento para RK4 es O(h⁴).'
+  }
 ];
+{
+  room: 2,
+  type: 'choice',
+  eulerSim: true, // Indica a game.js que debe cargar el gráfico interactivo de Euler
+  title: 'Error de Truncamiento Local vs Global',
+  theory: 'Al aumentar el tamaño de paso h en el método de Euler, la pendiente estimada se aleja de la trayectoria real, acumulando error en cada paso.',
+  formula: 'E_{local} = O(h^2), \\qquad E_{global} = O(h)',
+  text: 'Observa la gráfica interactiva superior. ¿Qué sucede con la solución numérica de Euler a medida que incrementas el tamaño de paso h?',
+  options: [
+    'El error de truncamiento global aumenta y la solución se aleja de la exacta.',
+    'La solución numérica se vuelve idéntica a la solución exacta.',
+    'El error disminuye porque se realizan menos pasos de cálculo.',
+    'El método de Euler se convierte en un método implícito.'
+  ],
+  hint: 'Mueve el control deslizante de h hacia 0.8 en la gráfica y compara la línea roja punteada con la verde.',
+  solution: 'A mayor h, el error acumulado (global) aumenta notablemente debido a que la aproximación por recta tangente se vuelve imprecisa sobre intervalos más grandes.'
+}
