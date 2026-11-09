@@ -126,4 +126,29 @@
   function frame(body) {
     const mainApp = app();
     const qList = window.ESCAPE_QUESTIONS || [];
-    if (!mainApp || !qList[i]) return
+    if (!mainApp || !qList[i]) return;
+    mainApp.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${qList[i].room + 1} / 4 · ${titles[qList[i].room]} · PREGUNTA ${i + 1} / ${qList.length}</div>${body}</section>`;
+    typeset();
+  }
+
+  function home() {
+    saveAttempt(); 
+    s = null; 
+    stop(); 
+    const m = modal();
+    if (m) m.innerHTML = ''; 
+    stage = 'home'; 
+    const timerChip = $('timer-chip');
+    if (timerChip) timerChip.hidden = true;
+
+    const mainApp = app();
+    if (!mainApp) return;
+
+    mainApp.innerHTML = `
+      <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; width: 100%;">
+        <div style="max-width: 480px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
+          <div class="eyebrow" style="color: #e8c882; font-weight: bold; letter-spacing: 1px; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
+          <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
+          <p class="hero-lead" style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 20px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
+          
+          <form
