@@ -1,110 +1,271 @@
 (() => {
-const app=document.getElementById('app'), modal=document.getElementById('modal-root');
-const questions=window.ESCAPE_QUESTIONS;
-const titles=['The Motion Lab','The Pendulum Room','The Bouncing Ball Chamber','The Spring Workshop'],runes=['E','N','ER','GY'];
-let s=null,stage='home',i=0,clock=null,deadline=0,stepStarted=0,order=[],focusBefore;
-const $=id=>document.getElementById(id),escape=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let pausedAt=0,pausedTotal=0,hitUntil=0;
-// A separate key per attempt prevents two tabs from overwriting one another.
-const historyPrefix='enchanted-energy:v1:'+location.pathname.replace(/index\.html$/, '')+':attempt:';
-const memoryHistory=new Map();let storageFailed=false;
-const identity=x=>String(x||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
-function validAttempt(a){return a&&typeof a.id==='string'&&Number.isFinite(a.start)&&Array.isArray(a.records)&&typeof a.name==='string'&&typeof a.block==='string';}
-function readHistory(){const result=new Map();try{for(let n=0;n<localStorage.length;n++){const key=localStorage.key(n);if(!key||!key.startsWith(historyPrefix))continue;try{const a=JSON.parse(localStorage.getItem(key));if(validAttempt(a))result.set(a.id,a);}catch{}}}catch{storageFailed=true;}for(const [id,a] of memoryHistory)result.set(id,a);return [...result.values()].sort((a,b)=>a.start-b.start||a.id.localeCompare(b.id));}
-function saveAttempt(){if(!s)return;const now=Date.now(),a=JSON.parse(JSON.stringify(s));a.updatedAt=now;a.stage=stage;a.questionIndex=i;a.schemaVersion=1;
- a.status=s.status||(stage==='dead'?'timeout':'incomplete');
- a.pausedMs=pausedTotal+(pausedAt?now-pausedAt:0);
- a.elapsedSeconds=Math.max(0,Math.round(((s.end||now)-s.start-a.pausedMs)/1000));
- a.left=remaining();a.score=Math.round(a.records.filter(r=>r.firstCorrect===true).length/a.records.length*100);
- if(stage==='question'&&stepStarted&&a.records[i])a.records[i].seconds+=(now-stepStarted)/1000;
- memoryHistory.set(a.id,a);try{localStorage.setItem(historyPrefix+a.id,JSON.stringify(a));storageFailed=false;}catch{storageFailed=true;}
-}
-// Save after handlers, including interactions that stop event propagation.
-for(const event of ['click','submit','change','drop'])document.addEventListener(event,()=>queueMicrotask(saveAttempt),true);
-window.addEventListener('pagehide',saveAttempt);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveAttempt();});
-setInterval(()=>{if(s&&stage!=='home'&&stage!=='finish')saveAttempt();},5000);
+  const app = document.getElementById('app'), modal = document.getElementById('modal-root');
+  const questions = window.ESCAPE_QUESTIONS;
+  const titles = ['Euler Explícito', 'Heun e Implícito', 'Estabilidad', 'RK y Diferencias Finitas'];
+  const runes = ['E', 'U', 'L', 'ER'];
+  let s = null, stage = 'home', i = 0, clock = null, deadline = 0, stepStarted = 0, order = [], focusBefore;
+  const $ = id => document.getElementById(id), escape = x => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let pausedAt = 0, pausedTotal = 0, hitUntil = 0;
 
-function remaining(){if(pausedAt)return Math.max(0,Math.ceil((deadline-pausedAt)/1000));return Math.max(0,Math.ceil((deadline-Date.now())/1000));}
-function format(n){return `${Math.floor(n/60).toString().padStart(2,'0')}:${(n%60).toString().padStart(2,'0')}`;}
-function stop(){clearInterval(clock);clock=null;}
-function tick(){if(pausedAt)return; $('timer').textContent=format(remaining()); if(!remaining()&&stage!=='dead'&&stage!=='finish'){account();stage='dead';stop();saveAttempt();modal.innerHTML=`<div class="modal-backdrop"><section class="death-modal"><h1>YOU ARE DEAD</h1><p>Your clock ran out. Retry this room with a fresh 12-minute clock. Your first-attempt score and recorded errors are preserved.</p><button class="button button-primary" data-do="retry">Retry this room</button><button class="button button-secondary" data-do="end">Finish and download results</button></section></div>`;}}
-function startClock(){deadline=Date.now()+720000;clock=setInterval(tick,250);tick();}
-function account(){if(stage==='question'&&stepStarted){s.records[i].seconds+=(Date.now()-stepStarted)/1000;stepStarted=0;}}
-function math(tex){const node=document.createElement('span');node.className='math-inline';node.textContent=tex;if(window.katex)katex.render(tex,node,{throwOnError:false});return node;}
-function latex(t){return t.replaceAll('−','-').replaceAll('½',String.raw`\frac{1}{2}`).replaceAll('Δ',String.raw`\Delta `).replaceAll('²','^2').replaceAll('₁','_1').replaceAll('₂','_2').replaceAll('×',String.raw`\times `).replaceAll('v_avg','v_{avg}').replace('energy decrease',String.raw`\text{energy decrease}`);}
-function fitFormulae(){app.querySelectorAll('.formula > .math-inline,.answer-option > .math-inline').forEach(el=>{el.style.fontSize='';const box=el.parentElement,style=getComputedStyle(box),available=box.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-12;const width=el.getBoundingClientRect().width;if(available>0&&width>available)el.style.fontSize=(parseFloat(getComputedStyle(el).fontSize)*available/width)+'px';});}
-window.addEventListener('resize',fitFormulae);
-function typeset(){
- requestAnimationFrame(fitFormulae);
- app.querySelectorAll('.formula').forEach(el=>{const t=el.textContent;if(t.includes('Mechanical energy'))return;el.replaceChildren();t.split(/\\qquad|\s{3,}/).forEach(part=>el.append(math(latex(part.trim()))));});
- app.querySelectorAll('.answer-option').forEach(el=>{if(['cards','search'].includes(questions[i].type)&&!questions[i].spring)el.replaceChildren(math(latex(el.textContent)));});
- // Only explicitly recognized symbols in prose are mathematical; words and spaces remain text nodes.
- const walk=document.createTreeWalker(app,NodeFilter.SHOW_TEXT);const nodes=[];while(walk.nextNode())nodes.push(walk.currentNode);
- nodes.filter(n=>!n.parentElement.closest('.math-inline,.formula,svg,input,select')).forEach(n=>{const parts=n.textContent.split(/(\b(?:U_g|U_e|E_m|v_x|v_y|K)\b)/);if(parts.length<2)return;const f=document.createDocumentFragment();parts.forEach((t,j)=>f.append(j%2?math(t):document.createTextNode(t)));n.replaceWith(f);});
-}
-function frame(body){app.innerHTML=`<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">ROOM ${questions[i].room+1} / 4 · ${titles[questions[i].room]} · QUESTION ${i+1} / 9</div>${body}</section>`;typeset();}
+  const historyPrefix = 'enchanted-energy:v1:' + location.pathname.replace(/index\.html$/, '') + ':attempt:';
+  const memoryHistory = new Map(); let storageFailed = false;
+  const identity = x => String(x || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase();
 
-function home(){saveAttempt();s=null;stop();modal.innerHTML='';stage='home';$('timer-chip').hidden=true;app.innerHTML=`<section class="hero"><div><div class="eyebrow">A PHYSICS ESCAPE ROOM</div><h1>The Enchanted<br><em>Energy Manual</em></h1><p class="hero-lead">Four rooms. Nine challenges. Find the runes and escape.</p><form id="entry"><label>First and last name<input name="participant" required maxlength="100" autocomplete="name"></label><label>Course / block<input name="block" required maxlength="60" placeholder="F1025B 511"></label><p class="lesson-footnote">Upload your results yourself to the OneDrive folder provided by your instructor.</p><p>12 minutes. Each incorrect answer costs 20 seconds and gives a short hint. Your score is based on first-attempt accuracy.</p><button class="button button-primary">Enter the manual →</button></form></div><div class="hero-art"><div class="orbit orbit-a"></div><div class="book"><div class="book-rune">ϟ</div><div class="book-title">ENERGY<br>& MOTION</div></div></div></section>`;}
-function begin(form){pausedAt=0;pausedTotal=0;hitUntil=0;const name=form.querySelector('[name="participant"]').value.trim(),block=form.querySelector('[name="block"]').value.trim();if(!name||!block)return; s={name,block,id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`,start:Date.now(),retries:0,penalty:0,finalErrors:0,records:questions.map((q,j)=>({question:j+1,room:q.room+1,type:q.type,title:q.title,attempts:0,errors:0,firstCorrect:null,solved:false,seconds:0,responses:[]}))};i=0;$('timer-chip').removeAttribute('hidden');$('timer').textContent='12:00';lesson();startClock();saveAttempt();}
-function lesson(){account();stage='lesson';const q=questions[i];frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">FIELD NOTE</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button class="button button-primary" data-do="question">Try the lock →</button></div>`);}
-function graph(){return `<svg viewBox="0 0 400 240" role="img" aria-label="Applied force versus elongation: 0.01 metres, 2 newtons; 0.02 metres, 4 newtons; 0.03 metres, 6 newtons" style="width:100%;max-width:420px"><path d="M65 20V190H350 M65 190L320 40" fill="none" stroke="#b8a6ff" stroke-width="2"/><g fill="#e8c882" font-size="13"><text x="75" y="22">Applied force (N)</text><text x="150" y="232">Elongation Δx (m)</text><text x="50" y="195">0</text>${[1,2,3].map(n=>`<circle cx="${65+85*n}" cy="${190-50*n}" r="5"/><text x="${50+85*n}" y="210">${(n/100).toFixed(2)}</text><text x="43" y="${195-50*n}">${2*n}</text>`).join('')}</g></svg>`;}
-function question(){if(i===8&&!s.records[i].grimoireDone){grimoire();return;}if([1,6].includes(i)&&!s.records[i].practiceDone){practice();return;}stage='question';stepStarted=Date.now();const q=questions[i];order=q.options?q.options.map((text,index)=>({text,index})).sort(()=>Math.random()-.5):[];let body='';if(q.type==='number')body='<form id="numeric"><label>Kinetic energy (J)<input id="number" inputmode="decimal" required placeholder="Enter a value"></label><button class="button button-primary">Unlock</button></form>';else if(q.type==='dial')body=`<label>Set the energy lock<select id="dial">${order.map((o,n)=>`<option value="${n}">${o.text}</option>`).join('')}</select></label><button class="button button-primary" data-do="dial">Unlock</button>`;else if(q.type==='search'){const spots=[[16,22],[73,20],[25,75],[76,70]].sort(()=>Math.random()-.5);body=`<div class="formula-hunt dark-search" id="choices">${order.map((o,n)=>`<button class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;}else if(i===6)body=`<div class="dial-lock">${[0,1,2].map(n=>`<label>Digit ${n+1}<select class="digit" aria-label="Digit ${n+1}">${Array.from({length:10},(_,v)=>`<option>${v}</option>`).join('')}</select></label>`).join('')}<span>N/m</span></div><button class="button button-primary" data-do="spring-unlock">Unlock</button>`;else body=`<div class="answer-list" id="choices">${order.map((o,n)=>`<button class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
-frame(`<div class="challenge-card"><div class="challenge-label">${q.type==='search'?'THE HIDDEN INSCRIPTIONS':'THE LOCK'}</div><h1>${q.text}</h1>${q.type==='graph'?graph():''}${q.type==='search'?'<div id="magnifier-controls"><p>Move your pointer or drag your finger to illuminate the inscriptions. Tap an illuminated card to select it. Keyboard users: Tab to reveal an option, then press Enter.</p><button class="button button-secondary" data-do="lens">⌕ Pick up the magnifying glass</button></div>':''}${body}<p id="feedback" role="status" style="color:var(--gold);min-height:2em"></p><button class="back-link" data-do="lesson">← Review the field note</button></div>`);
-if(q.spring){window.mountSpring($('magnifier-controls'),()=>stage==='question');const found=new Set();const bank=document.createElement('p');bank.setAttribute('role','status');bank.textContent='Measurements found: 0 / 3';$('choices').after(bank);const form=document.createElement('form');form.id='numeric';form.innerHTML='<label>Maximum speed (m/s)<input id="number" inputmode="decimal" required placeholder="Enter a value"></label><button class="button button-primary" disabled>Unlock</button>';bank.after(form);$('choices').addEventListener('click',e=>{const card=e.target.closest('.answer-option');if(!card)return;e.stopPropagation();found.add(card.dataset.index);card.setAttribute('aria-pressed','true');card.style.borderColor='#70d9b0';bank.textContent='Measurements found: '+found.size+' / 3 — '+[...found].map(n=>order[Number(n)].text).join(' · ');form.querySelector('button').disabled=found.size!==3;});}
-if(q.type==='search'){const area=$('choices');area.addEventListener('pointermove',e=>{if(!area.classList.contains('holding'))return;const r=area.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;area.style.setProperty('--x',`${x}px`);area.style.setProperty('--y',`${y}px`);const lens=area.querySelector('.hunt-lens');lens.style.left=`${x}px`;lens.style.top=`${y}px`;});area.addEventListener('focusin',e=>{const r=e.target.getBoundingClientRect(),a=area.getBoundingClientRect(),x=r.left+r.width/2-a.left,y=r.top+r.height/2-a.top;area.classList.add('holding');area.style.setProperty('--x',`${x}px`);area.style.setProperty('--y',`${y}px`);});}}
-function answer(value,correct){if(stage!=='question'||!remaining()||Date.now()<hitUntil)return;const r=s.records[i];r.attempts++;r.responses.push(String(value));if(r.firstCorrect===null)r.firstCorrect=correct;if(!correct){r.errors++;s.penalty+=20;deadline-=20000;attack();$('feedback').textContent=`−20 seconds. ${questions[i].hint}`;tick();return;}window.gameAudio.effect('success');account();r.solved=true;stage='solved';const end=i===8||questions[i+1].room!==questions[i].room;frame(`<div class="reward-card"><div class="reward-seal">✦</div><h1>Lock opened.</h1><p>${questions[i].solution}</p>${end?`<p>Room cleared. Keep this rune:</p><div class="rune-reward">${runes[questions[i].room]}</div>`:''}<button class="button button-primary" data-do="next">Continue →</button></div>`);}
-function finalLock(){stage='final';frame(`<div class="final-card"><h1>The final door</h1><p>Combine your runes in room order.</p><div class="final-runes">${runes.map(x=>`<span>${x}</span>`).join('')}</div><form id="exit"><label>Exit word<input name="word" required autocomplete="off"></label><button class="button button-primary">Unlock the exit</button></form><p id="feedback" role="status"></p></div>`);}
-function finish(success){account();stop();modal.innerHTML='';stage='finish';s.end=Date.now();s.status=success?'escaped':'timeout';s.left=remaining();s.score=Math.round(s.records.filter(r=>r.firstCorrect===true).length/9*100);saveAttempt();$('timer-chip').hidden=true;app.innerHTML=`<section class="ending"><div class="eyebrow">${success?'YOU ESCAPED!':'ATTEMPT COMPLETE'}</div><h1>${escape(s.name)}</h1><p>${escape(s.block)}</p><h2>FINAL SCORE: ${s.score}/100</h2><p>${s.records.filter(r=>r.firstCorrect).length} / 9 correct on the first attempt<br>Elapsed time: ${format(Math.round((s.end-s.start-pausedTotal)/1000))}<br>Clock remaining: ${format(s.left)} · Retries: ${s.retries}</p><p>Take a screenshot of this final score and submit it in the course platform. Download your CSV and upload it to the OneDrive folder provided by your instructor.</p><button class="button button-primary" data-do="csv">Download results CSV ↓</button><p id="download-note" role="status"></p><button class="text-button" data-do="home">Start a new participant</button></section>`;}
-function csv(){
- saveAttempt();const history=readHistory().filter(a=>identity(a.name)===identity(s.name)&&identity(a.block)===identity(s.block));
- const fields=['attempt_id','attempt_number','name','block','started_at','last_saved_at','ended_at','status','score_percent','elapsed_seconds','clock_remaining_seconds','penalty_seconds','room_retries','final_lock_errors','question','room','type','question_title','attempts','errors','first_attempt_correct','solved','question_seconds','submitted_responses','practice_errors','paused_seconds','arcade_events'];
- const safe=v=>{let x=String(v??'');if(/^[=+@\-\t\r]/.test(x))x="'"+x;return '"'+x.replace(/"/g,'""')+'"';};
- const rows=history.flatMap((a,n)=>a.records.map(r=>[a.id,n+1,a.name,a.block,new Date(a.start).toISOString(),new Date(a.updatedAt||a.start).toISOString(),a.end?new Date(a.end).toISOString():'',a.status,a.score,a.elapsedSeconds,a.left,a.penalty,a.retries,a.finalErrors,r.question,r.room,r.type,r.title,r.attempts,r.errors,r.firstCorrect===null?'':r.firstCorrect,r.solved,Number(r.seconds||0).toFixed(2),JSON.stringify(r.responses||[]),r.practiceErrors||0,Math.round((a.pausedMs||0)/1000),JSON.stringify(a.arcadeEvents||[])]));
- const slug=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,70);
- const date=new Date(),localDate=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
- const unique=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
- const filename=`escape_room_history_${localDate}_${slug(s.block)}_${slug(s.name)}_${unique}.csv`;
- const url=URL.createObjectURL(new Blob(['\ufeff'+[fields,...rows].map(row=>row.map(safe).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));
- const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
- $('download-note').textContent=`CSV prepared: ${history.length} attempt(s). Upload the downloaded file to your instructor’s OneDrive folder.`+(storageFailed?' Browser storage is unavailable; only accessible attempts are included.':'');
-}
-document.addEventListener('submit',e=>{e.preventDefault();if(Date.now()<hitUntil)return;if(e.target.id==='entry')begin(e.target);if(e.target.id==='numeric'){const raw=$('number').value.trim().replace(',','.');if(!raw||!Number.isFinite(Number(raw))){$('feedback').textContent=questions[i].spring?'Enter a valid speed in m/s.':'Enter a valid number in joules.';return;}answer(raw,Math.abs(Number(raw)-questions[i].value)<0.00005);}if(e.target.id==='exit'){if(e.target.elements.word.value.trim().toUpperCase()==='ENERGY')arcade('dragon',()=>finish(true));else{s.finalErrors++;s.penalty+=20;deadline-=20000;attack();$('feedback').textContent='−20 seconds. Join the letters from left to right.';tick();}}});
-document.addEventListener('click',e=>{if(Date.now()<hitUntil)return;const b=e.target.closest('[data-do]');if(!b)return;switch(b.dataset.do){case'spring-unlock':{const v=[...app.querySelectorAll('.digit')].map(x=>x.value).join('');answer(v,Number(v)===200);break;}case'question':question();break;case'check-practice':checkPractice();break;case'lesson':lesson();break;case'answer':{const o=order[Number(b.dataset.index)];answer(o.text,o.index===0);break;}case'dial':{const o=order[Number($('dial').value)];answer(o.text,o.index===0);break;}case'lens':$('choices').classList.add('holding');b.textContent='⌕ Magnifying glass equipped — move it over a card';break;case'next':if(i<8){i++;if(i===3)arcade('mirrors',lesson);else if(i===6)arcade('bells',lesson);else lesson();}else finalLock();break;case'retry':modal.innerHTML='';s.retries++;while(i>0&&questions[i-1].room===questions[i].room)i--;lesson();startClock();break;case'end':finish(false);break;case'csv':csv();break;case'home':home();break;}});
+  function validAttempt(a) { return a && typeof a.id === 'string' && Number.isFinite(a.start) && Array.isArray(a.records) && typeof a.name === 'string' && typeof a.block === 'string'; }
 
-let selectedCard=null;
-function practice(){
- stage='practice';const spring=i===6;
- const cards=spring?['Measure applied force and elongation','Plot applied force against Δx','Fit a straight line','Use the slope as k']:['K minimum','U_g maximum','K maximum','U_g minimum'];
- const labels=spring?['Step 1','Step 2','Step 3','Step 4']:['A: left turning point','A: left turning point','B: lowest point','B: lowest point'];
- const chart=spring?'':`<svg viewBox="0 0 500 250" role="img" aria-label="Ideal pendulum energy over one cycle. At A, t=0, gravitational potential is maximum and kinetic energy zero; at B, t=T/4, kinetic energy is maximum and potential zero."><path d="M50 25V200H460" fill="none" stroke="white"/>${['#e8c882','#b8a6ff'].map((c,j)=>`<polyline fill="none" stroke="${c}" stroke-width="3" points="${Array.from({length:101},(_,n)=>{const v=Math.cos(n/100*2*Math.PI)**2;return `${50+n*4},${200-150*(j?1-v:v)}`;}).join(' ')}"/>`).join('')}<g fill="white" font-size="13"><text x="5" y="18">Energy / total energy</text><text x="170" y="240">Time / period (t/T)</text><text x="45" y="220">A: 0</text><text x="125" y="220">B: ¼</text><text x="435" y="220">1</text><text x="280" y="20" fill="#e8c882">U<tspan baseline-shift="sub" font-size="10">g</tspan></text><text x="335" y="20" fill="#b8a6ff">K</text></g></svg>`;
- frame(`<div class="challenge-card"><h1>${spring?'Calculate the spring constant k':'Match energy to the pendulum’s motion'}</h1><p>${spring?'To determine k experimentally, drag the four cards into the correct order.':'Use the ideal pendulum graph: A is the left turning point and B is the lowest point. Take U_g = 0 at the lowest point.'} You can also select a card and then select a destination.</p>${chart}<div class="matching"><div id="bank" class="card-bank">${cards.map((t,id)=>({t,id})).sort(()=>Math.random()-.5).map(c=>`<button draggable="true" class="move-card" data-card="${c.id}">${c.t}</button>`).join('')}</div><div>${labels.map((t,id)=>`<div class="target-row"><span>${t}</span><div role="button" tabindex="0" class="drop-slot" data-slot="${id}">Place a card here</div></div>`).join('')}</div></div><button class="button button-primary" data-do="check-practice">Check arrangement</button><p id="feedback" role="status"></p></div>`);
- if(!spring)window.mountPendulum(app.querySelector('.challenge-card svg'),()=>stage==='practice'&&i===1);
- const place=(card,slot)=>{if(!card||!slot)return;const old=slot.querySelector('.move-card');if(old)$('bank').append(old);slot.textContent='';slot.append(card);selectedCard=null;};
- app.querySelectorAll('.move-card').forEach(card=>{card.addEventListener('dragstart',e=>{selectedCard=card;e.dataTransfer.setData('text/plain',card.dataset.card);});card.addEventListener('click',e=>{e.stopPropagation();selectedCard=card;});card.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;selectedCard=card;card.setPointerCapture(e.pointerId);});card.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')return;place(card,document.elementFromPoint(e.clientX,e.clientY)?.closest('.drop-slot'));});});
- app.querySelectorAll('.drop-slot').forEach(slot=>{slot.addEventListener('dragover',e=>e.preventDefault());slot.addEventListener('drop',e=>{e.preventDefault();place(selectedCard,slot);});slot.addEventListener('click',()=>place(selectedCard,slot));slot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();place(selectedCard,slot);}});});
-}
-function checkPractice(){if(stage!=='practice')return;const slots=[...app.querySelectorAll('.drop-slot')];const ids=slots.map(el=>Number(el.querySelector('.move-card')?.dataset.card??-1));if(ids.includes(-1)){$('feedback').textContent='Place all four cards first.';return;}
- const good=i===6?ids.every((v,j)=>v===j):ids.slice(0,2).every(v=>v<2)&&ids.slice(2).every(v=>v>=2);
- const r=s.records[i];r.responses.push('Practice: '+JSON.stringify(ids));if(good){r.practiceDone=true;question();}else{r.practiceErrors=(r.practiceErrors||0)+1;s.penalty+=20;deadline-=20000;attack();$('feedback').textContent=i===6?'−20 seconds. Collect data before plotting; the fitted slope gives k.':'−20 seconds. At a turning point the bob stops; at the bottom it is fastest.';tick();}
-}
+  function readHistory() {
+    const result = new Map();
+    try {
+      for (let n = 0; n < localStorage.length; n++) {
+        const key = localStorage.key(n);
+        if (!key || !key.startsWith(historyPrefix)) continue;
+        try { const a = JSON.parse(localStorage.getItem(key)); if (validAttempt(a)) result.set(a.id, a); } catch { }
+      }
+    } catch { storageFailed = true; }
+    for (const [id, a] of memoryHistory) result.set(id, a);
+    return [...result.values()].sort((a, b) => a.start - b.start || a.id.localeCompare(b.id));
+  }
 
-const baseQuestion=question;
-question=function(){if(i===7&&!s.records[i].practiceDone){showCauldron();return;}baseQuestion();};
-function showCauldron(){stage='practice';const choices=['½','k','Δx','²','m','g','h'].map((v,id)=>({v,id})).sort(()=>Math.random()-.5);frame(`<div class="challenge-card"><div class="eyebrow">SPRING WORKSHOP · ALCHEMY STATION</div><h1>Brew elastic potential energy</h1><p>Build the elastic-energy recipe from left to right. Select the ingredients and their order; some ingredients do not belong. Drag an ingredient into a slot, or select it and then select a slot.</p><div class="cauldron-scene"><div class="ingredient-bank">${choices.map(x=>`<button class="ingredient" data-id="${x.id}">${x.v}</button>`).join('')}</div><div class="cauldron"><div class="cauldron-bubble">✦</div><div class="recipe-line">${[0,1,2,3].map(n=>`<button class="recipe-slot" data-slot="${n}" aria-label="Recipe slot ${n+1}">?</button>`).join('')}</div></div></div><button class="button button-primary" data-do="brew">Brew potion</button><p id="feedback" role="status"></p></div>`);let selected=null;app.querySelectorAll('.ingredient').forEach(x=>{x.draggable=true;x.ondragstart=e=>{selected=x;e.dataTransfer.setData('text/plain',x.dataset.id);};x.onclick=()=>{selected=x;};});app.querySelectorAll('.recipe-slot').forEach(x=>{x.ondragover=e=>e.preventDefault();x.ondrop=e=>{e.preventDefault();if(selected){x.dataset.value=selected.dataset.id;x.textContent=selected.textContent;selected=null;}};});app.querySelectorAll('.recipe-slot').forEach(x=>x.onclick=()=>{if(selected){x.dataset.value=selected.dataset.id;x.textContent=selected.textContent;selected=null;}});}
-document.addEventListener('click',e=>{if(Date.now()<hitUntil)return;if(e.target.closest('[data-do="brew"]')){const slots=[...app.querySelectorAll('.recipe-slot')];if(slots.some(x=>x.dataset.value===undefined)){$('feedback').textContent='Add an ingredient to every part of the recipe.';return;}if(slots.every((x,j)=>Number(x.dataset.value)===j)){window.gameAudio.effect('brew');s.records[i].practiceDone=true;frame(`<div class="reward-card"><div class="reward-seal">✦</div><h1>The potion is ready!</h1><div class="formula">U_e = ½ k (Δx)²</div><button class="button button-primary" data-do="question">Continue to the lock →</button></div>`);}else{s.records[i].practiceErrors=(s.records[i].practiceErrors||0)+1;s.penalty+=20;deadline-=20000;attack();$('feedback').textContent='−20 seconds. Elastic energy uses k and the square of deformation.';tick();}}});
+  function saveAttempt() {
+    if (!s) return;
+    const now = Date.now(), a = JSON.parse(JSON.stringify(s));
+    a.updatedAt = now; a.stage = stage; a.questionIndex = i; a.schemaVersion = 1;
+    a.status = s.status || (stage === 'dead' ? 'timeout' : 'incomplete');
+    a.pausedMs = pausedTotal + (pausedAt ? now - pausedAt : 0);
+    a.elapsedSeconds = Math.max(0, Math.round(((s.end || now) - s.start - a.pausedMs) / 1000));
+    a.left = remaining(); a.score = Math.round(a.records.filter(r => r.firstCorrect === true).length / a.records.length * 100);
+    if (stage === 'question' && stepStarted && a.records[i]) a.records[i].seconds += (now - stepStarted) / 1000;
+    memoryHistory.set(a.id, a);
+    try { localStorage.setItem(historyPrefix + a.id, JSON.stringify(a)); storageFailed = false; } catch { storageFailed = true; }
+  }
 
-function attack(){window.gameAudio.effect('error');hitUntil=Date.now()+1500;const layer=document.createElement('div');layer.className='spell-attack';layer.style.setProperty('--attack-color',['#55caff','#b980ff','#ff5252','#c4d1dd'][questions[i].room]);layer.innerHTML='<div class="cracks">╲ ╱<br>╱ ╲</div><strong>Dark magic strikes! −20 seconds</strong>';document.body.append(layer);setTimeout(()=>layer.remove(),1500);}
-function grimoire(){stage='grimoire';let chosen=[];frame(`<div class="challenge-card"><h1>The sealed grimoire</h1><p>Write Hooke’s law for the restoring force by selecting the runes in the correct order. Here x is displacement from equilibrium.</p><div id="spell" class="formula">?</div><div class="rune-bank">${['x','F','÷','k','=','+','−'].sort(()=>Math.random()-.5).map(t=>`<button class="button rune">${t}</button>`).join('')}</div><button id="reset-spell" type="button" class="button" title="Reset spell" aria-label="Reset spell">↺</button><button id="open-spell" class="button button-primary">Unlock</button><button id="spell-hint" class="button button-secondary" aria-expanded="false">Hint</button><p id="spell-hint-text" hidden>The restoring force points opposite to the displacement.</p><p id="feedback" role="status"></p></div>`);app.querySelectorAll('.rune').forEach(b=>b.onclick=()=>{if(chosen.length<5){chosen.push(b.textContent);$('spell').replaceChildren(math(latex(chosen.join(' '))));}});$('spell-hint').onclick=()=>{$('spell-hint-text').hidden=false;$('spell-hint').setAttribute('aria-expanded','true');};$('reset-spell').onclick=()=>{chosen=[];$('spell').textContent='?';};$('open-spell').onclick=()=>{if(Date.now()<hitUntil)return;if(['F = − k x','F = − x k'].includes(chosen.join(' '))){s.records[i].grimoireDone=true;question();}else{s.records[i].practiceErrors=(s.records[i].practiceErrors||0)+1;s.penalty+=20;deadline-=20000;attack();$('feedback').textContent='The inscription is incomplete or incorrect. Use Hint if you need help.';tick();}};}
-function arcade(kind,done){account();stage='arcade';pausedAt=Date.now();$('timer').textContent=format(remaining())+' · PAUSED';let round=0,busy=false;const log=(result)=>{(s.arcadeEvents??=[]).push({game:kind,round:round+1,result});};const leave=()=>{const dt=Date.now()-pausedAt;pausedTotal+=dt;deadline+=dt;pausedAt=0;done();};
-frame(`<div class="challenge-card arcade"><div class="eyebrow">BONUS CHALLENGE · MAIN CLOCK PAUSED</div><h1>${kind==='dragon'?'The final guardian':kind==='bells'?'The enchanted bells':'The Illusionist’s Tower'}</h1><p id="arcade-info"></p><div id="arena"></div><p id="arcade-status" role="status"></p><button class="button button-primary" id="arcade-start">Start</button></div>`);
-const arena=$('arena'),info=$('arcade-info'),status=$('arcade-status'),start=$('arcade-start');
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
-if(kind==='dragon'){info.textContent='Cast 30 spells in 15 seconds! Click the dragon or focus it and press Enter. This duel does not affect your physics score.';arena.innerHTML='<progress id="health" max="30" value="30"></progress><button id="dragon" aria-label="Cast a spell at the dragon">🐉</button>';let hits=0,end=0,loop;const dragon=$('dragon');dragon.disabled=true;start.onclick=()=>{hits=0;$('health').value=30;end=Date.now()+15000;dragon.disabled=false;start.hidden=true;loop=setInterval(()=>{status.textContent=`${Math.max(0,Math.ceil((end-Date.now())/1000))} seconds · ${hits}/30 spells`;if(Date.now()>=end){clearInterval(loop);dragon.disabled=true;log('retry');start.hidden=false;start.textContent='Try again';}},100);};dragon.onclick=()=>{if(Date.now()>end)return;window.gameAudio.effect('spell');hits++;$('health').value=30-hits;dragon.animate([{transform:'scale(.9)'},{transform:'scale(1)'}],{duration:140});if(hits>=30){clearInterval(loop);dragon.disabled=true;log('won');status.textContent='The guardian yields. The exit is open!';start.hidden=false;start.textContent='Escape →';start.onclick=leave;}};return;}
-const finishRound=()=>{window.gameAudio.effect('success');log('won');round++;if(round===3){status.textContent='The enchantment is broken!';start.textContent='Continue →';start.hidden=false;start.onclick=leave;}else{status.textContent='Round cleared!';start.textContent='Next round';start.hidden=false;}};
-if(kind==='bells'){info.textContent='Watch the numbered bells light up, then repeat the order. Three rounds: 3, 5 and 6 notes.';let sequence=[],entered=0;arena.innerHTML=Array.from({length:4},(_,n)=>`<button class="bell" aria-label="Bell ${n+1}">♬<small>${n+1}</small></button>`).join('');const bells=[...arena.children];bells.forEach((b,n)=>b.onclick=()=>{if(busy||start.hidden===false)return;window.gameAudio.bell(n);b.animate([{background:'#e8c882'},{background:'#302343'}],{duration:250});if(n!==sequence[entered]){busy=true;log('retry');status.textContent='The illusion holds. Watch a new pattern and try again.';start.hidden=false;start.textContent='Replay round';return;}entered++;if(entered===sequence.length){busy=true;finishRound();}});start.onclick=async()=>{busy=true;start.hidden=true;entered=0;sequence=Array.from({length:[3,5,6][round]},()=>Math.floor(Math.random()*4));status.textContent=`Round ${round+1}: watch…`;for(const n of sequence){window.gameAudio.bell(n);bells[n].classList.add('lit');await wait(650);bells[n].classList.remove('lit');await wait(250);}status.textContent='Your turn — repeat the pattern.';busy=false;};
-}else{info.textContent='Follow the glowing energy seal as the mirrors move. Choose the mirror that hides it. In the seal, U represents total potential energy.';let target=0,positions=[0,1,2];arena.className='mirror-arena';arena.innerHTML=[0,1,2].map(n=>`<button class="mirror" style="left:${n*33.33}%" aria-label="Mirror ${n+1}">◈</button>`).join('');const mirrors=[...arena.children];const hideSeals=()=>mirrors.forEach((m,n)=>{m.textContent='◈';m.classList.remove('lit');m.setAttribute('aria-label',`Mirror ${n+1}`);});const revealSeal=()=>{const m=mirrors[target];m.replaceChildren(math('E_m = K + U'));m.classList.add('lit');m.setAttribute('aria-label',`Mirror ${target+1}: mechanical energy equals kinetic plus potential energy`);};mirrors.forEach((b,n)=>b.onclick=()=>{if(busy||!start.hidden)return;busy=true;if(n===target){revealSeal();finishRound();}else{log('retry');status.textContent='An illusion! Follow the light again.';start.hidden=false;start.textContent='Retry round';}});start.onclick=async()=>{busy=true;start.hidden=true;hideSeals();target=Math.floor(Math.random()*3);revealSeal();status.textContent=`Round ${round+1}: follow the light.`;await wait(1800);hideSeals();for(let t=0;t<3+round*2;t++){const a=Math.floor(Math.random()*3),b=(a+1+Math.floor(Math.random()*2))%3;[positions[a],positions[b]]=[positions[b],positions[a]];mirrors.forEach((m,n)=>m.style.left=positions[n]*33.33+'%');await wait(850-round*160);}busy=false;status.textContent='Which mirror holds the light?';};}
-}
+  for (const event of ['click', 'submit', 'change', 'drop']) document.addEventListener(event, () => queueMicrotask(saveAttempt), true);
+  window.addEventListener('pagehide', saveAttempt);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveAttempt(); });
+  setInterval(() => { if (s && stage !== 'home' && stage !== 'finish') saveAttempt(); }, 5000);
 
-window.gameAudio.init($('sound-toggle'));document.querySelector('.brand').addEventListener('click',e=>e.preventDefault());home();
+  function remaining() {
+    if (pausedAt) return Math.max(0, Math.ceil((deadline - pausedAt) / 1000));
+    return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  }
+
+  function format(n) { return `${Math.floor(n / 60).toString().padStart(2, '0')}:${(n % 60).toString().padStart(2, '0')}`; }
+  function stop() { clearInterval(clock); clock = null; }
+
+  function tick() {
+    if (pausedAt) return;
+    $('timer').textContent = format(remaining());
+    if (!remaining() && stage !== 'dead' && stage !== 'finish') {
+      account(); stage = 'dead'; stop(); saveAttempt();
+      modal.innerHTML = `<div class="modal-backdrop"><section class="death-modal"><h1>TIEMPO AGOTADO</h1><p>Se ha acabado el tiempo. Reintenta esta sala con un temporizador fresco de 12 minutos.</p><button class="button button-primary" data-do="retry">Reintentar esta sala</button><button class="button button-secondary" data-do="end">Finalizar y descargar resultados</button></section></div>`;
+    }
+  }
+
+  function startClock() { deadline = Date.now() + 720000; clock = setInterval(tick, 250); tick(); }
+  function account() { if (stage === 'question' && stepStarted) { s.records[i].seconds += (Date.now() - stepStarted) / 1000; stepStarted = 0; } }
+
+  function math(tex) {
+    const node = document.createElement('span');
+    node.className = 'math-inline';
+    node.textContent = tex;
+    if (window.katex) katex.render(tex, node, { throwOnError: false });
+    return node;
+  }
+
+  function latex(t) {
+    return t.replaceAll('−', '-').replaceAll('½', String.raw`rac{1}{2}`).replaceAll('Δ', String.raw`\Delta `).replaceAll('²', '^2').replaceAll('₁', '_1').replaceAll('₂', '_2').replaceAll('×', String.raw`	imes `);
+  }
+
+  function fitFormulae() {
+    app.querySelectorAll('.formula > .math-inline,.answer-option > .math-inline').forEach(el => {
+      el.style.fontSize = '';
+      const box = el.parentElement, style = getComputedStyle(box), available = box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 12;
+      const width = el.getBoundingClientRect().width;
+      if (available > 0 && width > available) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * available / width) + 'px';
+    });
+  }
+
+  window.addEventListener('resize', fitFormulae);
+
+  function typeset() {
+    requestAnimationFrame(fitFormulae);
+    app.querySelectorAll('.formula').forEach(el => {
+      const t = el.textContent;
+      el.replaceChildren();
+      t.split(/\\qquad|\s{3,}/).forEach(part => el.append(math(latex(part.trim()))));
+    });
+    app.querySelectorAll('.answer-option').forEach(el => {
+      if (['cards', 'search'].includes(questions[i].type) && !questions[i].eulerSim) el.replaceChildren(math(latex(el.textContent)));
+    });
+    const walk = document.createTreeWalker(app, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walk.nextNode()) nodes.push(walk.currentNode);
+    nodes.filter(n => !n.parentElement.closest('.math-inline,.formula,svg,input,select')).forEach(n => {
+      const parts = n.textContent.split(/(\b(?:y_{n\+1}|y_n|f\(t,y\)|h|O\(h\^2\)|O\(h\)|dy/dt)\b)/);
+      if (parts.length < 2) return;
+      const f = document.createDocumentFragment();
+      parts.forEach((t, j) => f.append(j % 2 ? math(t) : document.createTextNode(t)));
+      n.replaceWith(f);
+    });
+  }
+
+  function frame(body) {
+    app.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${questions[i].room + 1} / 4 · ${titles[questions[i].room]} · PREGUNTA ${i + 1} / ${questions.length}</div>${body}</section>`;
+    typeset();
+  }
+
+  function home() {
+    saveAttempt(); s = null; stop(); modal.innerHTML = ''; stage = 'home'; $('timer-chip').hidden = true;
+    app.innerHTML = `<section class="hero"><div><div class="eyebrow">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div><h1>Manual Encantado de<br><em>IVPs y ODEs</em></h1><p class="hero-lead">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p><form id="entry"><label>Nombre y Apellido<input name="participant" required maxlength="100" autocomplete="name"></label><label>Curso / Grupo<input name="block" required maxlength="60" placeholder="Métodos Numéricos - G1"></label><p class="lesson-footnote">Descarga tus resultados al finalizar y entrégalos a tu instructor.</p><p>12 minutos. Cada respuesta incorrecta resta 20 segundos. Tu puntaje se basa en la precisión del primer intento.</p><button class="button button-primary">Ingresar al manual →</button></form></div><div class="hero-art"><div class="orbit orbit-a"></div><div class="book"><div class="book-rune">∫</div><div class="book-title">MÉTODOS<br>NUMÉRICOS</div></div></div></section>`;
+  }
+
+  function begin(form) {
+    pausedAt = 0; pausedTotal = 0; hitUntil = 0;
+    const name = form.querySelector('[name="participant"]').value.trim(), block = form.querySelector('[name="block"]').value.trim();
+    if (!name || !block) return;
+    s = {
+      name, block, id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      start: Date.now(), retries: 0, penalty: 0, finalErrors: 0,
+      records: questions.map((q, j) => ({ question: j + 1, room: q.room + 1, type: q.type, title: q.title, attempts: 0, errors: 0, firstCorrect: null, solved: false, seconds: 0, responses: [] }))
+    };
+    i = 0; $('timer-chip').removeAttribute('hidden'); $('timer').textContent = '12:00';
+    lesson(); startClock(); saveAttempt();
+  }
+
+  function lesson() {
+    account(); stage = 'lesson'; const q = questions[i];
+    frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">NOTA DE CAMPO</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button class="button button-primary" data-do="question">Probar el candado →</button></div>`);
+  }
+
+  function question() {
+    stage = 'question'; stepStarted = Date.now(); const q = questions[i];
+    order = q.options ? q.options.map((text, index) => ({ text, index })).sort(() => Math.random() - .5) : [];
+    let body = '';
+
+    if (q.type === 'number') {
+      body = '<form id="numeric"><label>Resultado numérico<input id="number" inputmode="decimal" required placeholder="Ingrese un valor (ej. 1.10)"></label><button class="button button-primary">Desbloquear</button></form>';
+    } else if (q.type === 'dial') {
+      body = `<label>Selecciona la respuesta<select id="dial">${order.map((o, n) => `<option value="${n}">${o.text}</option>`).join('')}</select></label><button class="button button-primary" data-do="dial">Desbloquear</button>`;
+    } else if (q.type === 'search') {
+      const spots = [[16, 22], [73, 20], [25, 75], [76, 70]].sort(() => Math.random() - .5);
+      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
+    } else {
+      body = `<div class="answer-list" id="choices">${order.map((o, n) => `<button class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
+    }
+
+    frame(`<div class="challenge-card"><div class="challenge-label">${q.type === 'search' ? 'INSCRIPCIONES OCULTAS' : 'EL CANDADO'}</div><h1>${q.text}</h1>${q.type === 'search' ? '<div id="magnifier-controls"><p>Mueve el puntero para iluminar las opciones y selecciona la correcta.</p><button class="button button-secondary" data-do="lens">⌕ Usar lupa</button></div>' : ''}<div id="magnifier-controls"></div>${body}<p id="feedback" role="status" style="color:var(--gold);min-height:2em"></p><button class="back-link" data-do="lesson">← Revisar la nota de campo</button></div>`);
+
+    if (q.eulerSim && window.mountEulerSimulation) {
+      window.mountEulerSimulation($('magnifier-controls'), () => stage === 'question');
+      const bank = document.createElement('p');
+      bank.setAttribute('role', 'status');
+      bank.style.color = '#e8c882';
+      bank.textContent = 'Ajusta el slider de h para observar la acumulación del error de truncamiento.';
+      $('choices').before(bank);
+    }
+
+    if (q.type === 'search') {
+      const area = $('choices');
+      area.addEventListener('pointermove', e => {
+        if (!area.classList.contains('holding')) return;
+        const r = area.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        area.style.setProperty('--x', `${x}px`); area.style.setProperty('--y', `${y}px`);
+        const lens = area.querySelector('.hunt-lens'); lens.style.left = `${x}px`; lens.style.top = `${y}px`;
+      });
+      area.addEventListener('focusin', e => {
+        const r = e.target.getBoundingClientRect(), a = area.getBoundingClientRect(), x = r.left + r.width / 2 - a.left, y = r.top + r.height / 2 - a.top;
+        area.classList.add('holding'); area.style.setProperty('--x', `${x}px`); area.style.setProperty('--y', `${y}px`);
+      });
+    }
+  }
+
+  function answer(value, correct) {
+    if (stage !== 'question' || !remaining() || Date.now() < hitUntil) return;
+    const r = s.records[i]; r.attempts++; r.responses.push(String(value));
+    if (r.firstCorrect === null) r.firstCorrect = correct;
+    if (!correct) {
+      r.errors++; s.penalty += 20; deadline -= 20000; attack();
+      $('feedback').textContent = `−20 segundos. ${questions[i].hint}`; tick(); return;
+    }
+    if (window.gameAudio) window.gameAudio.effect('success');
+    account(); r.solved = true; stage = 'solved';
+    const end = i === questions.length - 1 || questions[i + 1].room !== questions[i].room;
+    frame(`<div class="reward-card"><div class="reward-seal">✦</div><h1>Candado abierto.</h1><p>${questions[i].solution}</p>${end ? `<p>Sala completada. Conserva esta runa:</p><div class="rune-reward">${runes[questions[i].room]}</div>` : ''}<button class="button button-primary" data-do="next">Continuar →</button></div>`);
+  }
+
+  function finalLock() {
+    stage = 'final';
+    frame(`<div class="final-card"><h1>La puerta final</h1><p>Combina las runas obtenidas en orden de sala.</p><div class="final-runes">${runes.map(x => `<span>${x}</span>`).join('')}</div><form id="exit"><label>Palabra de salida<input name="word" required autocomplete="off" placeholder="Ingresa la palabra completa"></label><button class="button button-primary">Desbloquear salida</button></form><p id="feedback" role="status"></p></div>`);
+  }
+
+  function finish(success) {
+    account(); stop(); modal.innerHTML = ''; stage = 'finish'; s.end = Date.now();
+    s.status = success ? 'escaped' : 'timeout'; s.left = remaining();
+    s.score = Math.round(s.records.filter(r => r.firstCorrect === true).length / questions.length * 100);
+    saveAttempt(); $('timer-chip').hidden = true;
+    app.innerHTML = `<section class="ending"><div class="eyebrow">${success ? '¡HAS ESCAPADO!' : 'INTENTO FINALIZADO'}</div><h1>${escape(s.name)}</h1><p>${escape(s.block)}</p><h2>PUNTAJE FINAL: ${s.score}/100</h2><p>${s.records.filter(r => r.firstCorrect).length} / ${questions.length} correctas al primer intento<br>Tiempo transcurrido: ${format(Math.round((s.end - s.start - pausedTotal) / 1000))}<br>Tiempo restante: ${format(s.left)} · Reintentos: ${s.retries}</p><p>Descarga el archivo CSV y envíalo a tu profesor como comprobante.</p><button class="button button-primary" data-do="csv">Descargar resultados CSV ↓</button><p id="download-note" role="status"></p><button class="text-button" data-do="home">Nuevo participante</button></section>`;
+  }
+
+  function csv() {
+    saveAttempt(); const history = readHistory().filter(a => identity(a.name) === identity(s.name) && identity(a.block) === identity(s.block));
+    const fields = ['attempt_id', 'attempt_number', 'name', 'block', 'started_at', 'last_saved_at', 'ended_at', 'status', 'score_percent', 'elapsed_seconds', 'clock_remaining_seconds', 'penalty_seconds', 'room_retries', 'final_lock_errors', 'question', 'room', 'type', 'question_title', 'attempts', 'errors', 'first_attempt_correct', 'solved', 'question_seconds', 'submitted_responses', 'practice_errors', 'paused_seconds'];
+    const safe = v => { let x = String(v ?? ''); if (/^[=+@\-\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
+    const rows = history.flatMap((a, n) => a.records.map(r => [a.id, n + 1, a.name, a.block, new Date(a.start).toISOString(), new Date(a.updatedAt || a.start).toISOString(), a.end ? new Date(a.end).toISOString() : '', a.status, a.score, a.elapsedSeconds, a.left, a.penalty, a.retries, a.finalErrors, r.question, r.room, r.type, r.title, r.attempts, r.errors, r.firstCorrect === null ? '' : r.firstCorrect, r.solved, Number(r.seconds || 0).toFixed(2), JSON.stringify(r.responses || []), r.practiceErrors || 0, Math.round((a.pausedMs || 0) / 1000)]));
+    const slug = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 70);
+    const date = new Date(), localDate = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    const unique = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
+    const filename = `escape_room_ivp_${localDate}_${slug(s.block)}_${slug(s.name)}_${unique}.csv`;
+    const url = URL.createObjectURL(new Blob(['\ufeff' + [fields, ...rows].map(row => row.map(safe).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    $('download-note').textContent = `CSV preparado: ${history.length} intento(s).`;
+  }
+
+  function attack() {
+    if (window.gameAudio) window.gameAudio.effect('error');
+    hitUntil = Date.now() + 1500;
+    const layer = document.createElement('div'); layer.className = 'spell-attack';
+    layer.style.setProperty('--attack-color', ['#55caff', '#b980ff', '#ff5252', '#c4d1dd'][questions[i].room]);
+    layer.innerHTML = '<div class="cracks">╲ ╱<br>╱ ╲</div><strong>¡Ataque de error! −20 segundos</strong>';
+    document.body.append(layer); setTimeout(() => layer.remove(), 1500);
+  }
+
+  document.addEventListener('submit', e => {
+    e.preventDefault(); if (Date.now() < hitUntil) return;
+    if (e.target.id === 'entry') begin(e.target);
+    if (e.target.id === 'numeric') {
+      const raw = $('number').value.trim().replace(',', '.');
+      if (!raw || !Number.isFinite(Number(raw))) { $('feedback').textContent = 'Ingresa un valor numérico válido.'; return; }
+      answer(raw, Math.abs(Number(raw) - questions[i].value) < 0.0005);
+    }
+    if (e.target.id === 'exit') {
+      if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
+      else {
+        s.finalErrors++; s.penalty += 20; deadline -= 20000; attack();
+        $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; tick();
+      }
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (Date.now() < hitUntil) return;
+    const b = e.target.closest('[data-do]'); if (!b) return;
+    switch (b.dataset.do) {
+      case 'question': question(); break;
+      case 'lesson': lesson(); break;
+      case 'answer': { const o = order[Number(b.dataset.index)]; answer(o.text, o.index === 0); break; }
+      case 'dial': { const o = order[Number($('dial').value)]; answer(o.text, o.index === 0); break; }
+      case 'lens': $('choices').classList.add('holding'); b.textContent = '⌕ Lupa equipada — muévela sobre una tarjeta'; break;
+      case 'next': if (i < questions.length - 1) { i++; lesson(); } else finalLock(); break;
+      case 'retry': modal.innerHTML = ''; s.retries++; while (i > 0 && questions[i - 1].room === questions[i].room) i--; lesson(); startClock(); break;
+      case 'end': finish(false); break;
+      case 'csv': csv(); break;
+      case 'home': home(); break;
+    }
+  });
+
+  if (window.gameAudio && $('sound-toggle')) window.gameAudio.init($('sound-toggle'));
+  document.querySelector('.brand').addEventListener('click', e => e.preventDefault());
+  home();
 })();
+game.js
+Mostrando game.js.
