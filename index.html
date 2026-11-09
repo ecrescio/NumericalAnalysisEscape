@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
   
-  <!-- CSS Base (si tienes tu archivo en assets/css/styles.css o css/styles.css) -->
+  <!-- Hojas de estilo -->
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -35,7 +35,7 @@
     </div>
   </header>
 
-  <!-- Contenedor Principal donde se renderiza el juego -->
+  <!-- Contenedor Principal -->
   <main id="app" class="app-shell" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; width: 100%; box-sizing: border-box;"></main>
 
   <div id="modal-root"></div>
@@ -50,19 +50,17 @@
   <!-- Cargar KaTeX de CDN -->
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 
-  <!-- Cargar Scripts Locales o integrados si están en la misma carpeta -->
-  <script src="assets/js/rooms.js"></script>
-  <script src="assets/js/enhancements.js"></script>
-  <script src="assets/js/game.js"></script>
+  <!-- Compatibilidad de Rutas: Intenta cargar desde la misma carpeta y desde assets/js/ -->
+  <script src="assets/js/rooms.js" onerror="this.onerror=null;this.src='assets/js/rooms.js';"></script>
+  <script src="assets/js/enhancements.js" onerror="this.onerror=null;this.src='assets/js/enhancements.js';"></script>
+  <script src="assets/js/game.js" onerror="this.onerror=null;this.src='assets/js/game.js';"></script>
 
-  <!-- Fallback de emergencia por si los scripts externos no cargaron -->
+  <!-- Carga directa limpia de la pantalla inicial -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const app = document.getElementById('app');
-      // Si a los 500ms el div main sigue vacío, inyecta la pantalla de inicio directamente
       setTimeout(() => {
         if (app && app.children.length === 0) {
-          console.warn("Autocargando pantalla de inicio por fallo en la ruta de scripts externals.");
           app.innerHTML = `
             <section style="max-width: 480px; width: 100%; background: #1a1829; padding: 35px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
               <div style="color: #e8c882; font-weight: bold; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
@@ -83,9 +81,8 @@
               </form>
             </section>
           `;
-          
         }
-      }, 500);
+      }, 300);
     });
   </script>
 </body>
