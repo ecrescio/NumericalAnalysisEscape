@@ -144,6 +144,7 @@
     const mainApp = app();
     if (!mainApp) return;
 
+
     mainApp.innerHTML = `
       <section class="hero" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; width: 100%;">
         <div style="max-width: 480px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
@@ -151,4 +152,269 @@
           <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
           <p class="hero-lead" style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 20px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
           
-          <form
+          <form id="entry" onsubmit="window.submitEntryForm(event)" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+            <label style="display: flex; flex-direction: column; gap: 5px; color: #ddd; font-size: 0.9em;">
+              <strong>Nombre y Apellido:</strong>
+              <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 5px; color: #ddd; font-size: 0.9em;">
+              <strong>Curso / Grupo:</strong>
+              <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+            </label>
+            <p style="font-size: 0.85em; color: #e8c882; margin: 5px 0 0 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #e8c882;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
+            <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 5px;">Ingresar al manual →</button>
+          </form>
+        </div>
+      </section>
+    `;
+  }
+
+  function begin(form) {
+    pausedAt = 0; 
+    pausedTotal = 0; 
+    hitUntil = 0;
+
+    const nameInput = form.querySelector('[name="participant"]');
+    const blockInput = form.querySelector('[name="block"]');
+
+    if (!nameInput || !blockInput) return;
+
+    const name = nameInput.value.trim();
+    const block = blockInput.value.trim();
+
+    if (!name || !block) return;
+
+    const qList = window.ESCAPE_QUESTIONS || [];
+    if (qList.length === 0) {
+      alert("Error: No se han encontrado las preguntas de rooms.js");
+      return;
+    }
+
+    s = {
+      name, 
+      block, 
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      start: Date.now(), 
+      retries: 0, 
+      penalty: 0, 
+      finalErrors: 0,
+      records: qList.map((q, j) => ({ 
+        question: j + 1, 
+        room: q.room + 1, 
+        type: q.type, 
+        title: q.title, 
+        attempts: 0, 
+        errors: 0, 
+        firstCorrect: null, 
+        solved: false, 
+        seconds: 0, 
+        responses: [] 
+      }))
+    };
+
+    i = 0; 
+    const timerChip = $('timer-chip');
+    if (timerChip) {
+      timerChip.removeAttribute('hidden');
+      $('timer').textContent = '12:00';
+    }
+
+    lesson(); 
+    startClock(); 
+    saveAttempt();
+  }
+
+  window.submitEntryForm = function(e) {
+    if (e) e.preventDefault();
+    const form = document.getElementById('entry');
+    if (form) begin(form);
+  };
+
+  function lesson() {
+    account(); stage = 'lesson'; 
+    const qList = window.ESCAPE_QUESTIONS || [];
+    const q = qList[i];
+    if (!q) return;
+    frame(`<div class="room-heading"><h1>${q.title}</h1></div><div class="lesson-card"><div class="lesson-label">NOTA DE CAMPO</div><p>${q.theory}</p><div class="formula">${q.formula}</div></div><div class="room-actions"><button type="button" class="button button-primary" data-do="question">Probar el candado →</button></div>`);
+  }
+
+  function question() {
+    stage = 'question'; stepStarted = Date.now(); 
+    const qList = window.ESCAPE_QUESTIONS || [];
+    const q = qList[i];
+    if (!q) return;
+    order = q.options ? q.options.map((text, index) => ({ text, index })).sort(() => Math.random() - .5) : [];
+    let body = '';
+
+    if (q.type === 'number') {
+      body = '<form id="numeric"><label>Resultado numérico<input id="number" inputmode="decimal" required placeholder="Ingrese un valor (ej. 1.10)"></label><button type="submit" class="button button-primary">Desbloquear</button></form>';
+    } else if (q.type === 'dial') {
+      body = `<label>Selecciona la respuesta<select id="dial">${order.map((o, n) => `<option value="${n}">${o.text}</option>`).join('')}</select></label><button type="button" class="button button-primary" data-do="dial">Desbloquear</button>`;
+    } else if (q.type === 'search') {
+      const spots = [[16, 22], [73, 20], [25, 75], [76, 70]].sort(() => Math.random() - .5);
+      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
+    } else {
+      body = `<div class="answer-list" id="choices">${order.map((o, n) => `<button type="button" class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
+    }
+
+    frame(`<div class="challenge-card"><div class="challenge-label">${q.type === 'search' ? 'INSCRIPCIONES OCULTAS' : 'EL CANDADO'}</div><h1>${q.text}</h1>${q.type === 'search' ? '<div id="magnifier-controls"><p>Mueve el puntero para iluminar las opciones y selecciona la correcta.</p><button type="button" class="button button-secondary" data-do="lens">⌕ Usar lupa</button></div>' : '<div id="magnifier-controls"></div>'}${body}<p id="feedback" role="status" style="color:var(--gold);min-height:2em"></p><button type="button" class="back-link" data-do="lesson">← Revisar la nota de campo</button></div>`);
+
+    if (q.eulerSim && window.mountEulerSimulation) {
+      window.mountEulerSimulation($('magnifier-controls'), () => stage === 'question');
+      const bank = document.createElement('p');
+      bank.setAttribute('role', 'status');
+      bank.style.color = '#e8c882';
+      bank.textContent = 'Ajusta el slider de h para observar la acumulación del error de truncamiento.';
+      $('choices').before(bank);
+    }
+
+    if (q.type === 'search') {
+      const area = $('choices');
+      if (area) {
+        area.addEventListener('pointermove', e => {
+          if (!area.classList.contains('holding')) return;
+          const r = area.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+          area.style.setProperty('--x', `${x}px`); area.style.setProperty('--y', `${y}px`);
+          const lens = area.querySelector('.hunt-lens'); 
+          if (lens) { lens.style.left = `${x}px`; lens.style.top = `${y}px`; }
+        });
+        area.addEventListener('focusin', e => {
+          const r = e.target.getBoundingClientRect(), a = area.getBoundingClientRect(), x = r.left + r.width / 2 - a.left, y = r.top + r.height / 2 - a.top;
+          area.classList.add('holding'); area.style.setProperty('--x', `${x}px`); area.style.setProperty('--y', `${y}px`);
+        });
+      }
+    }
+  }
+
+  function answer(value, correct) {
+    if (stage !== 'question' || !remaining() || Date.now() < hitUntil) return;
+    const r = s.records[i]; r.attempts++; r.responses.push(String(value));
+    if (r.firstCorrect === null) r.firstCorrect = correct;
+    
+    const qList = window.ESCAPE_QUESTIONS || [];
+    
+    if (!correct) {
+      r.errors++; s.penalty += 20; deadline -= 20000; attack();
+      $('feedback').textContent = `−20 segundos. ${qList[i].hint}`; tick(); return;
+    }
+    if (window.gameAudio) window.gameAudio.effect('success');
+    account(); r.solved = true; stage = 'solved';
+    const end = i === qList.length - 1 || qList[i + 1].room !== qList[i].room;
+    frame(`<div class="reward-card"><div class="reward-seal">✦</div><h1>Candado abierto.</h1><p>${qList[i].solution}</p>${end ? `<p>Sala completada. Conserva esta runa:</p><div class="rune-reward">${runes[qList[i].room]}</div>` : ''}<button type="button" class="button button-primary" data-do="next">Continuar →</button></div>`);
+  }
+
+  function finalLock() {
+    stage = 'final';
+    frame(`<div class="final-card"><h1>La puerta final</h1><p>Combina las runas obtenidas en orden de sala.</p><div class="final-runes">${runes.map(x => `<span>${x}</span>`).join('')}</div><form id="exit"><label>Palabra de salida<input name="word" required autocomplete="off" placeholder="Ingresa la palabra completa"></label><button type="submit" class="button button-primary">Desbloquear salida</button></form><p id="feedback" role="status"></p></div>`);
+  }
+
+  function finish(success) {
+    account(); stop(); 
+    const m = modal();
+    if (m) m.innerHTML = ''; 
+    stage = 'finish'; s.end = Date.now();
+    s.status = success ? 'escaped' : 'timeout'; s.left = remaining();
+    const qList = window.ESCAPE_QUESTIONS || [];
+    s.score = Math.round(s.records.filter(r => r.firstCorrect === true).length / qList.length * 100);
+    saveAttempt(); $('timer-chip').hidden = true;
+    
+    const mainApp = app();
+    if (!mainApp) return;
+
+    mainApp.innerHTML = `<section class="ending"><div class="eyebrow">${success ? '¡HAS ESCAPADO!' : 'INTENTO FINALIZADO'}</div><h1>${escape(s.name)}</h1><p>${escape(s.block)}</p><h2>PUNTAJE FINAL: ${s.score}/100</h2><p>${s.records.filter(r => r.firstCorrect).length} / ${qList.length} correctas al primer intento<br>Tiempo transcurrido: ${format(Math.round((s.end - s.start - pausedTotal) / 1000))}<br>Tiempo restante: ${format(s.left)} · Reintentos: ${s.retries}</p><p>Descarga el archivo CSV y envíalo a tu profesor como comprobante.</p><button type="button" class="button button-primary" data-do="csv">Descargar resultados CSV ↓</button><p id="download-note" role="status"></p><button type="button" class="text-button" data-do="home">Nuevo participante</button></section>`;
+  }
+
+  function csv() {
+    saveAttempt(); const history = readHistory().filter(a => identity(a.name) === identity(s.name) && identity(a.block) === identity(s.block));
+    const fields = ['attempt_id', 'attempt_number', 'name', 'block', 'started_at', 'last_saved_at', 'ended_at', 'status', 'score_percent', 'elapsed_seconds', 'clock_remaining_seconds', 'penalty_seconds', 'room_retries', 'final_lock_errors', 'question', 'room', 'type', 'question_title', 'attempts', 'errors', 'first_attempt_correct', 'solved', 'question_seconds', 'submitted_responses', 'practice_errors', 'paused_seconds'];
+    const safe = v => { let x = String(v ?? ''); if (/^[=+@\-\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
+    const rows = history.flatMap((a, n) => a.records.map(r => [a.id, n + 1, a.name, a.block, new Date(a.start).toISOString(), new Date(a.updatedAt || a.start).toISOString(), a.end ? new Date(a.end).toISOString() : '', a.status, a.score, a.elapsedSeconds, a.left, a.penalty, a.retries, a.finalErrors, r.question, r.room, r.type, r.title, r.attempts, r.errors, r.firstCorrect === null ? '' : r.firstCorrect, r.solved, Number(r.seconds || 0).toFixed(2), JSON.stringify(r.responses || []), r.practiceErrors || 0, Math.round((a.pausedMs || 0) / 1000)]));
+    const slug = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 70);
+    const date = new Date(), localDate = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    const unique = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
+    const filename = `escape_room_ivp_${localDate}_${slug(s.block)}_${slug(s.name)}_${unique}.csv`;
+    const url = URL.createObjectURL(new Blob(['\ufeff' + [fields, ...rows].map(row => row.map(safe).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    $('download-note').textContent = `CSV preparado: ${history.length} intento(s).`;
+  }
+
+  function attack() {
+    if (window.gameAudio) window.gameAudio.effect('error');
+    hitUntil = Date.now() + 1500;
+    const layer = document.createElement('div'); layer.className = 'spell-attack';
+    const qList = window.ESCAPE_QUESTIONS || [];
+    layer.style.setProperty('--attack-color', ['#55caff', '#b980ff', '#ff5252', '#c4d1dd'][qList[i].room]);
+    layer.innerHTML = '<div class="cracks">╲ ╱<br>╱ ╲</div><strong>¡Ataque de error! −20 segundos</strong>';
+    document.body.append(layer); setTimeout(() => layer.remove(), 1500);
+  }
+
+  // Event Listeners generales
+  document.addEventListener('submit', e => {
+    if (e.target.id === 'entry') {
+      e.preventDefault();
+      begin(e.target);
+      return;
+    }
+    
+    e.preventDefault();
+    if (Date.now() < hitUntil) return;
+
+    const qList = window.ESCAPE_QUESTIONS || [];
+
+    if (e.target.id === 'numeric') {
+      const raw = $('number').value.trim().replace(',', '.');
+      if (!raw || !Number.isFinite(Number(raw))) { 
+        $('feedback').textContent = 'Ingresa un valor numérico válido.'; 
+        return; 
+      }
+      answer(raw, Math.abs(Number(raw) - qList[i].value) < 0.0005);
+    }
+
+    if (e.target.id === 'exit') {
+      if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
+      else {
+        s.finalErrors++; 
+        s.penalty += 20; 
+        deadline -= 20000; 
+        attack();
+        $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; 
+        tick();
+      }
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (Date.now() < hitUntil) return;
+    const b = e.target.closest('[data-do]'); 
+    if (!b) return;
+
+    const qList = window.ESCAPE_QUESTIONS || [];
+
+    switch (b.dataset.do) {
+      case 'question': question(); break;
+      case 'lesson': lesson(); break;
+      case 'answer': { const o = order[Number(b.dataset.index)]; answer(o.text, o.index === 0); break; }
+      case 'dial': { const o = order[Number($('dial').value)]; answer(o.text, o.index === 0); break; }
+      case 'lens': $('choices').classList.add('holding'); b.textContent = '⌕ Lupa equipada — muévela sobre una tarjeta'; break;
+      case 'next': if (i < qList.length - 1) { i++; lesson(); } else finalLock(); break;
+      case 'retry': modal().innerHTML = ''; s.retries++; while (i > 0 && qList[i - 1].room === qList[i].room) i--; lesson(); startClock(); break;
+      case 'end': finish(false); break;
+      case 'csv': csv(); break;
+      case 'home': home(); break;
+    }
+  });
+
+  // Inicialización
+  function init() {
+    if (window.gameAudio && $('sound-toggle')) window.gameAudio.init($('sound-toggle'));
+    const brand = document.querySelector('.brand');
+    if (brand) brand.addEventListener('click', e => e.preventDefault());
+    home();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
