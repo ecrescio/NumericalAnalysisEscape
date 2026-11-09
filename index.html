@@ -1,31 +1,55 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11101a">
-  <meta name="description" content="An interactive escape room about Euler and Heun numerical methods.">
-  <title>The Enchanted Energy Manual</title>
+  <meta name="description" content="Un escape room interactivo sobre Métodos Numéricos para Ecuaciones Diferenciales (IVPs): Euler, Heun, Euler Implícito, Estabilidad y RK4.">
+  <title>Manual Encantado de IVPs y ODEs</title>
+  
+  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Estilos -->
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 </head>
 <body>
+  <!-- Fondos de iluminación ambiental -->
   <div class="ambient ambient-one" aria-hidden="true"></div>
   <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <!-- Barra Superior -->
   <header class="topbar">
-    <a class="brand" href="#home" aria-label="The Enchanted Calculus home"><span class="brand-mark">✦</span><span>THE ENCHANTED<br>CALCULUS</span></a>
-    <div class="topbar-right"><div class="timer-chip" id="timer-chip" hidden aria-live="off"><span class="timer-dot"></span><span id="timer">12:00</span></div><button class="sound-toggle" id="sound-toggle" type="button" aria-label="Toggle sound" title="Sound is off">♫</button></div>
+    <a class="brand" href="#home" aria-label="Inicio del Escape Room">
+      <span class="brand-mark">✦</span>
+      <span>MÉTODOS<br>NUMÉRICOS</span>
+    </a>
+    <div class="topbar-right">
+      <div class="timer-chip" id="timer-chip" hidden aria-live="off">
+        <span class="timer-dot"></span>
+        <span id="timer">12:00</span>
+      </div>
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Activar/Silenciar sonido" title="Sonido apagado">♫</button>
+    </div>
   </header>
+
+  <!-- Contenedor Principal de la App -->
   <main id="app" class="app-shell" aria-live="polite"></main>
+
+  <!-- Componentes Emergentes y Notificaciones -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="modal-root"></div>
-  <footer class="site-footer"><span>PHYISCS ESCAPE ROOM</span><span>Observe · Calculate · Escape</span><span class="author-credit">Designed by Mario Estrada · <a href="mailto:iestrada@tec.mx">iestrada@tec.mx</a> · Developed with AI assistance through a vibe-coding workflow.</span></footer>
+
+  <!-- Pie de Página -->
+  <footer class="site-footer">
+    <span>NUMERICAL METHODS ESCAPE ROOM</span>
+    <span>Observe · Calculate · Escape</span>
+    <span class="author-credit">Diseñado por Mario Estrada · <a href="mailto:iestrada@tec.mx">iestrada@tec.mx</a></span>
+  </footer>
+
+  <!-- Scripts y Librerías (Cargar KaTeX primero, luego datos y lógica) -->
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script defer src="assets/js/rooms.js"></script>
-  <script defer src="assets/js/enhancements.js"></script>
-  <script defer src="assets/js/game.js"></script>
-</body>
-</html>
+  <script defer src="assets/js/rooms.
