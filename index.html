@@ -4,54 +4,93 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11101a">
-  <meta name="description" content="Un escape room interactivo sobre Métodos Numéricos para Ecuaciones Diferenciales (IVPs): Euler, Heun, Euler Implícito, Estabilidad y RK4.">
+  <meta name="description" content="Un escape room interactivo sobre Métodos Numéricos para Ecuaciones Diferenciales (IVPs).">
   <title>Manual Encantado de IVPs y ODEs</title>
   
-  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Estilos -->
+  <!-- CSS Base (si tienes tu archivo en assets/css/styles.css o css/styles.css) -->
   <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 </head>
-<body>
-  <!-- Fondos de iluminación ambiental -->
+<body style="background-color: #11101a; color: #fff; font-family: 'DM Sans', sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between;">
+  
   <div class="ambient ambient-one" aria-hidden="true"></div>
   <div class="ambient ambient-two" aria-hidden="true"></div>
 
-  <!-- Barra Superior -->
-  <header class="topbar">
-    <a class="brand" href="#home" aria-label="Inicio del Escape Room">
-      <span class="brand-mark">✦</span>
+  <!-- Header -->
+  <header class="topbar" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+    <a class="brand" href="#home" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: bold;">
+      <span class="brand-mark" style="color: #e8c882;">✦</span>
       <span>MÉTODOS<br>NUMÉRICOS</span>
     </a>
-    <div class="topbar-right">
-      <div class="timer-chip" id="timer-chip" hidden aria-live="off">
-        <span class="timer-dot"></span>
+    <div class="topbar-right" style="display: flex; align-items: center; gap: 15px;">
+      <div class="timer-chip" id="timer-chip" hidden style="background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; font-weight: bold;">
         <span id="timer">12:00</span>
       </div>
-      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Activar/Silenciar sonido" title="Sonido apagado">♫</button>
+      <button class="sound-toggle" id="sound-toggle" type="button" style="background: none; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer;">♫</button>
     </div>
   </header>
 
-  <!-- Contenedor Principal de la App -->
-  <main id="app" class="app-shell" aria-live="polite"></main>
+  <!-- Contenedor Principal donde se renderiza el juego -->
+  <main id="app" class="app-shell" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; width: 100%; box-sizing: border-box;"></main>
 
-  <!-- Componentes Emergentes y Notificaciones -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="modal-root"></div>
 
-  <!-- Pie de Página -->
-  <footer class="site-footer">
+  <!-- Footer -->
+  <footer class="site-footer" style="display: flex; justify-content: space-between; padding: 20px 40px; font-size: 0.8em; color: #777; border-top: 1px solid rgba(255,255,255,0.05);">
     <span>NUMERICAL METHODS ESCAPE ROOM</span>
     <span>Observe · Calculate · Escape</span>
-    <span class="author-credit">Diseñado por Mario Estrada · <a href="mailto:iestrada@tec.mx">iestrada@tec.mx</a></span>
+    <span>Diseñado por Mario Estrada</span>
   </footer>
 
-  <!-- Scripts y Librerías (Cargar KaTeX primero, luego datos y lógica) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-  <script defer src="assets/js/rooms.js"></script>
-  <script defer src="assets/js/enhancements.js"></script>
-  <script defer src="assets/js/game.js"></script>
+  <!-- Cargar KaTeX de CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+  <!-- Cargar Scripts Locales o integrados si están en la misma carpeta -->
+  <script src="rooms.js"></script>
+  <script src="enhancements.js"></script>
+  <script src="game.js"></script>
+
+  <!-- Fallback de emergencia por si los scripts externos no cargaron -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const app = document.getElementById('app');
+      // Si a los 500ms el div main sigue vacío, inyecta la pantalla de inicio directamente
+      setTimeout(() => {
+        if (app && app.children.length === 0) {
+          console.warn("Autocargando pantalla de inicio por fallo en la ruta de scripts externals.");
+          app.innerHTML = `
+            <section style="max-width: 480px; width: 100%; background: #1a1829; padding: 35px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
+              <div style="color: #e8c882; font-weight: bold; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
+              <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
+              <p style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 25px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
+              
+              <form id="entry" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
+                  <strong>Nombre y Apellido:</strong>
+                  <input name="participant" required maxlength="100" autocomplete="name" placeholder="Ej. Ana García" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; color: #ddd; font-size: 0.9em;">
+                  <strong>Curso / Grupo:</strong>
+                  <input name="block" required maxlength="60" placeholder="Ej. Métodos Numéricos - G1" style="padding: 12px; border-radius: 6px; border: 1px solid #443c63; background: #0f0d17; color: #fff; font-size: 1em; width: 100%; box-sizing: border-box;">
+                </label>
+                <p style="font-size: 0.85em; color: #e8c882; margin: 5px 0 0 0; background: rgba(232, 200, 130, 0.1); padding: 10px; border-radius: 6px;">⏱ 12 minutos. Cada respuesta incorrecta resta 20 segundos.</p>
+                <button type="submit" class="button button-primary" style="padding: 14px; font-weight: bold; background: #73dcca; color: #0f0d17; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; margin-top: 10px;">Ingresar al manual →</button>
+              </form>
+            </section>
+          `;
+          
+          document.getElementById('entry').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert("Los archivos JS (rooms.js, game.js) deben estar guardados en la MISMA CARPETA que este index.html para iniciar el temporizador.");
+          });
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>
