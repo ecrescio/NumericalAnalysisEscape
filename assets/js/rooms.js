@@ -68,7 +68,7 @@ window.ESCAPE_QUESTIONS = [
     formula: 'y_{n+1} = \\frac{y_n}{1 - h \\lambda}',
     text: 'Dada $dy/dt = -10y$ con $y(0) = 1$ y paso $h = 0.1$, selecciona el valor exacto de $y(0.1)$ usando Euler Implícito.',
     options: ['0.50', '0.00', '1.00', '0.20'],
-    hint: 'Sustituye h = 0.1 y λ = -10 en 1 / (1 - 0.1(-10)) = 1 / (1 + 1) = 1/2.',
+    hint: 'Sustituye $h = 0.1$ y $\lambda  = -10$ en $\frac{1}{(1 - 0.1(-10)} = 1/2$.',
     solution: '$y_1 = 1 / (1 - 0.1(-10)) = 1 / 2 = 0.50$.'
   },
 
@@ -79,12 +79,12 @@ window.ESCAPE_QUESTIONS = [
     room: 2,
     type: 'choice',
     title: 'Condición de Estabilidad Absoluta',
-    theory: 'Para la ecuación de prueba $dy/dt = \\lambda y$ (con $\\lambda < 0$), el factor de amplificación $Q(h\\lambda)$ debe cumplir $|Q(h\\lambda)| < 1$ para no oscilar o divergir.',
+    theory: 'Para la ecuación de prueba $dy/dt = \lambda y$ (con $\lambda < 0$), el factor de amplificación $Q(h\lambda)$ debe cumplir $|Q(h\lambda)| < 1$ para no oscilar o divergir.',
     formula: 'Q(h\\lambda) = 1 + h\\lambda \\qquad |1 + h\\lambda| < 1',
     text: '¿Cuál es el límite máximo del paso $h$ para que el método de Euler Explícito sea estable si $\\lambda = -10$?',
-    options: ['$h < 0.2$', '$h < 0.1$', '$h < 0.5$', 'Estable para todo h'],
-    hint: 'Resuelve la desigualdad -1 < 1 - 10h < 1.',
-    solution: '$-1 < 1 - 10h < 1 ⟹ -2 < -10h < 0 ⟹ h < 0.2$.'
+    options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
+    hint: 'Resuelve la desigualdad $-1 < 1 - 10h < 1$.',
+    solution: '$-1 < 1 - 10h < 1$ ⟹ $-2 < -10h < 0$ ⟹ $h < 0.2$.'
   },
   {
     room: 2,
