@@ -370,7 +370,9 @@
     if (q.eulerSim) {
       renderEulerSim($('magnifier-controls'));
     }
-
+    if (q.methodsSim && window.mountMethodsComparison) {
+      window.mountMethodsComparison($('magnifier-controls'));
+    }
     if (q.type === 'search') {
       const area = $('choices');
       if (area) {
