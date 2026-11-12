@@ -138,18 +138,18 @@ window.ESCAPE_QUESTIONS = [
   {
     room: 3,
     type: 'choice',
-    methodsSim: true, // Activa la gráfica interactiva al tocar la pantalla
-    title: 'Identificación Visual de Métodos',
-    theory: 'Para una función convexa y creciente como $y\' = 2y$ ($y(0)=1$), Euler Explícito siempre subestima la curva real porque usa únicamente la pendiente inicial. Los métodos de orden superior (Heun, RK4) corrigen esa curvatura.',
-    formula: 'y(t) = e^{2t} \\qquad t_0 = 0, \\; h = 0.5',
-    text: 'Toca o haz clic sobre la gráfica para proyectar el paso $y_1$ en $t = 0.5$. Observando su posición respecto a la curva exacta (verde) y la tangente inicial, ¿qué método generó el punto proyectado?',
+    methodsSim: true,
+    title: 'Comparación de Precisión entre Métodos',
+    theory: 'Para un mismo tamaño de paso $h$, el error global disminuye drásticamente conforme aumenta el orden del método: Euler es $O(h)$, Heun es $O(h^2)$ y Runge-Kutta clásico (RK4) es $O(h^4)$.',
+    formula: 'E_{Euler} = O(h) \\qquad E_{Heun} = O(h^2) \\qquad E_{RK4} = O(h^4)',
+    text: 'Toca o haz clic sobre la gráfica para proyectar simultáneamente las aproximaciones de Euler, Heun y RK4 en $t = 0.5$. Observando su cercanía a la curva exacta (verde), ¿cuál es el orden correcto de los métodos del MÁS preciso al MENOS preciso?',
     options: [
-      'Método de Heun (Trapecio / Predictor-Corrector)',
-      'Método de Euler Explícito',
-      'Método de Euler Implícito',
-      'Aproximación constante (Orden 0)'
+      '1º RK4 (más preciso)  →  2º Heun  →  3º Euler Explícito (menos preciso)',
+      '1º Euler Explícito (más preciso)  →  2º Heun  →  3º RK4 (menos preciso)',
+      '1º Heun (más preciso)  →  2º RK4  →  3º Euler Explícito (menos preciso)',
+      '1º RK4 (más preciso)  →  2º Euler Explícito  →  3º Heun (menos preciso)'
     ],
-    hint: 'Observa que el punto cae por encima de la recta tangente inicial (Euler Explícito) pero ligeramente por debajo de la curva exacta e^{2t}.',
-    solution: '¡Correcto! Para $y\'=2y$ con h=0.5: Euler Explícito da $y_1$ = 2.00 (sobre la tangente gris), la exacta es $e^1 ≈ 2.72$, y Heun promedia las pendientes dando $y_1 = 2.50$.'
+    hint: 'Observa en t = 0.5 qué punto queda prácticamente encima de la línea verde (2.718), cuál queda en medio (2.500) y cuál queda más abajo (2.000).',
+    solution: '¡Exacto! En t=0.5 (exacto = 2.718): RK4 logra 2.708 (error 0.010), Heun logra 2.500 (error 0.218) y Euler se queda en 2.000 (error 0.718).'
   }
 ];
