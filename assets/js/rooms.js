@@ -133,5 +133,23 @@ window.ESCAPE_QUESTIONS = [
     ],
     hint: 'Busca la expresión que evalúa los nodos a la izquierda (n-1) y a la derecha (n+1) divididos entre 2h.',
     solution: 'La diferencia finita centrada usa el nodo posterior y anterior: (y_{n+1} - y_{n-1}) / (2h), logrando un error O(h²).'
+  },
+
+  {
+    room: 3,
+    type: 'choice',
+    methodsSim: true, // Activa la gráfica interactiva al tocar la pantalla
+    title: 'Identificación Visual de Métodos',
+    theory: 'Para una función convexa y creciente como $y\' = 2y$ ($y(0)=1$), Euler Explícito siempre subestima la curva real porque usa únicamente la pendiente inicial. Los métodos de orden superior (Heun, RK4) corrigen esa curvatura.',
+    formula: 'y(t) = e^{2t} \\qquad t_0 = 0, \\; h = 0.5',
+    text: 'Toca o haz clic sobre la gráfica para proyectar el paso $y_1$ en $t = 0.5$. Observando su posición respecto a la curva exacta (verde) y la tangente inicial, ¿qué método generó el punto proyectado?',
+    options: [
+      'Método de Heun (Trapecio / Predictor-Corrector)',
+      'Método de Euler Explícito',
+      'Método de Euler Implícito',
+      'Aproximación constante (Orden 0)'
+    ],
+    hint: 'Observa que el punto cae por encima de la recta tangente inicial (Euler Explícito) pero ligeramente por debajo de la curva exacta e^{2t}.',
+    solution: '¡Correcto! Para y\'=2y con h=0.5: Euler Explícito da y_1 = 2.00 (sobre la tangente gris), la exacta es e^1 ≈ 2.72, y Heun promedia las pendientes dando y_1 = 2.50.'
   }
 ];
