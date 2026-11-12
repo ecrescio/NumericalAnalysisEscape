@@ -134,8 +134,8 @@
       }
     });
 
-    // 3. Renderizar expresiones $...$ en títulos (h1), párrafos (p) y etiquetas (label)
-    mainApp.querySelectorAll('h1, p, label').forEach(el => {
+  
+    mainApp.querySelectorAll('h1, p, label, .methods-simulation span').forEach(el => {
       if (el.dataset.katexRendered || el.querySelector('input, select')) return;
       const html = el.innerHTML;
       if (html.includes('$')) {
