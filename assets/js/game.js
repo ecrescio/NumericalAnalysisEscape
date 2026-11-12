@@ -105,38 +105,131 @@
 
   window.addEventListener('resize', fitFormulae);
 
+  // Detecta si una opción de respuesta es una fórmula matemática en lugar de una oración en español
+  function isMathOption(txt) {
+    return /[_^\\]|\\frac|\\approx|^[a-zA-Z0-9\s=+\-*/().<>]+$/.test(txt.trim()) && txt.trim().split(' ').length <= 8;
+  }
+
   function typeset() {
     const mainApp = app();
     if (!mainApp) return;
     requestAnimationFrame(fitFormulae);
-    
-    // Renderizar formulas principales
+
+    // 1. Renderizar bloques .formula
     mainApp.querySelectorAll('.formula').forEach(el => {
+      if (el.dataset.katexRendered) return;
       const t = el.textContent;
       el.replaceChildren();
       t.split(/\\qquad|\s{3,}/).forEach(part => el.append(math(latex(part.trim()))));
+      el.dataset.katexRendered = "true";
     });
 
-    const qList = window.ESCAPE_QUESTIONS || [];
+    // 2. Renderizar opciones de respuesta matemáticas en cualquier tipo de pregunta
     mainApp.querySelectorAll('.answer-option').forEach(el => {
-      if (qList[i] && ['cards', 'search'].includes(qList[i].type) && !qList[i].eulerSim) {
-        el.replaceChildren(math(latex(el.textContent)));
+      if (el.dataset.katexRendered) return;
+      const txt = el.textContent.trim();
+      if (isMathOption(txt)) {
+        el.replaceChildren(math(latex(txt)));
+        el.dataset.katexRendered = "true";
       }
     });
 
-    // Renderizar math en texto de lecciones y simulación
-    mainApp.querySelectorAll('.euler-simulation p, .challenge-card p, .lesson-card p').forEach(el => {
-      if (el.dataset.katexRendered) return;
-      const text = el.innerHTML;
-      if (text.includes('$')) {
-        el.innerHTML = text.replace(/\$(.*?)\$/g, (match, formula) => {
+    // 3. Renderizar expresiones $...$ en títulos (h1), párrafos (p) y etiquetas (label)
+    mainApp.querySelectorAll('h1, p, label').forEach(el => {
+      if (el.dataset.katexRendered || el.querySelector('input, select')) return;
+      const html = el.innerHTML;
+      if (html.includes('$')) {
+        el.innerHTML = html.replace(/\$([^$]+)\$/g, (_, formula) => {
           const span = document.createElement('span');
-          if (window.katex) katex.render(formula, span, { throwOnError: false });
+          span.className = 'math-inline';
+          if (window.katex) {
+            katex.render(latex(formula), span, { throwOnError: false });
+          } else {
+            span.textContent = formula;
+          }
           return span.outerHTML;
         });
         el.dataset.katexRendered = "true";
       }
     });
+  }
+
+  // Simulación interactiva integrada (garantiza que siempre aparezca en Pregunta 7)
+  function renderEulerSim(anchor) {
+    if (!anchor) return;
+    if (window.mountEulerSimulation) {
+      window.mountEulerSimulation(anchor, () => stage === 'question');
+      return;
+    }
+
+    const panel = document.createElement('section');
+    panel.className = 'euler-simulation';
+    panel.innerHTML = `
+      <div style="background: #181623; border: 1px solid #302a45; padding: 16px; border-radius: 8px; margin-bottom: 20px; color: #e1dfeb; text-align: left;">
+        <p style="margin-top:0;"><strong>Simulación IVP:</strong> $\\frac{dy}{dt} = -y$, con $y(0) = 1$. Compara la solución exacta $y(t) = e^{-t}$ con el Método de Euler Explícito.</p>
+        <div class="euler-controls" style="margin: 12px 0; display: flex; gap: 15px; align-items: center; color: #fff;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">Tamaño de paso (h): 
+            <input class="euler-h" type="range" min="0.05" max="0.8" step="0.05" value="0.2" style="cursor: pointer; width: 180px;">
+            <span class="h-val" style="font-weight: bold; color: #e8c882; min-width: 40px; display: inline-block;">0.20</span>
+          </label>
+        </div>
+        <svg class="euler-scene" viewBox="0 0 500 240" role="img" aria-label="Comparación de Euler vs Solución Exacta" style="width: 100%; background: #0f0d17; border-radius: 6px; display: block;">
+          <path d="M 40 20 V 200 H 480" fill="none" stroke="#555" stroke-width="2"/>
+          <text x="475" y="225" fill="#aaa" font-size="12">t</text>
+          <text x="15" y="25" fill="#aaa" font-size="12">y(t)</text>
+          <path class="curve-exact" fill="none" stroke="#73dcca" stroke-width="2.5"/>
+          <path class="curve-euler" fill="none" stroke="#ff6270" stroke-width="2" stroke-dasharray="4 4"/>
+          <g class="euler-nodes"></g>
+        </svg>
+        <div style="display: flex; gap: 20px; font-size: 13px; margin-top: 10px;">
+          <span style="color: #73dcca; font-weight: 500;">― Solución Exacta ($e^{-t}$)</span>
+          <span style="color: #ff6270; font-weight: 500;">- - Método de Euler</span>
+        </div>
+      </div>
+    `;
+    anchor.before(panel);
+
+    const pathExact = panel.querySelector('.curve-exact');
+    const pathEuler = panel.querySelector('.curve-euler');
+    const nodesGroup = panel.querySelector('.euler-nodes');
+    const sliderH = panel.querySelector('.euler-h');
+    const spanH = panel.querySelector('.h-val');
+
+    const mapX = t => 40 + (t / 4) * 420;
+    const mapY = y => 200 - (y / 1.2) * 170;
+
+    let dExact = '';
+    for (let k = 0; k <= 100; k++) {
+      const t = (k / 100) * 4;
+      const y = Math.exp(-t);
+      dExact += `${k === 0 ? 'M' : 'L'} ${mapX(t)} ${mapY(y)} `;
+    }
+    pathExact.setAttribute('d', dExact);
+
+    function updateEuler() {
+      const h = parseFloat(sliderH.value);
+      spanH.textContent = h.toFixed(2);
+      let t = 0, y = 1.0;
+      let dEuler = `M ${mapX(t)} ${mapY(y)}`;
+      nodesGroup.innerHTML = `<circle cx="${mapX(t)}" cy="${mapY(y)}" r="4" fill="#ff6270"/>`;
+
+      while (t < 4 - 1e-9) {
+        y = y + h * (-y);
+        t = t + h;
+        const px = mapX(t), py = mapY(y);
+        dEuler += ` L ${px} ${py}`;
+        const node = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        node.setAttribute('cx', px);
+        node.setAttribute('cy', py);
+        node.setAttribute('r', '4');
+        node.setAttribute('fill', '#ff6270');
+        nodesGroup.appendChild(node);
+      }
+      pathEuler.setAttribute('d', dEuler);
+    }
+
+    sliderH.addEventListener('input', updateEuler);
+    updateEuler();
   }
 
   function frame(body) {
@@ -274,8 +367,8 @@
 
     frame(`<div class="challenge-card"><div class="challenge-label">${q.type === 'search' ? 'INSCRIPCIONES OCULTAS' : 'EL CANDADO'}</div><h1>${q.text}</h1>${q.type === 'search' ? '<div id="magnifier-controls"><p>Mueve el puntero para iluminar las opciones y selecciona la correcta.</p><button type="button" class="button button-secondary" data-do="lens">⌕ Usar lupa</button></div>' : '<div id="magnifier-controls"></div>'}${body}<p id="feedback" role="status" style="color:var(--gold);min-height:2em"></p><button type="button" class="back-link" data-do="lesson">← Revisar la nota de campo</button></div>`);
 
-    if (q.eulerSim && window.mountEulerSimulation) {
-      window.mountEulerSimulation($('magnifier-controls'), () => stage === 'question');
+    if (q.eulerSim) {
+      renderEulerSim($('magnifier-controls'));
     }
 
     if (q.type === 'search') {
