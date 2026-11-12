@@ -447,7 +447,7 @@
       body = `<label>Selecciona la respuesta<select id="dial">${order.map((o, n) => `<option value="${n}">${o.text}</option>`).join('')}</select></label><button type="button" class="button button-primary" data-do="dial">Desbloquear</button>`;
     } else if (q.type === 'search') {
       const spots = [[16, 22], [73, 20], [25, 75], [76, 70]].sort(() => Math.random() - .5);
-      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}\%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
+      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
     } else {
       body = `<div class="answer-list" id="choices">${order.map((o, n) => `<button type="button" class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
     }
@@ -539,4 +539,75 @@
     const layer = document.createElement('div'); layer.className = 'spell-attack';
     const qList = window.ESCAPE_QUESTIONS || [];
     layer.style.setProperty('--attack-color', ['#55caff', '#b980ff', '#ff5252', '#c4d1dd'][qList[i].room]);
-    layer.innerHTML = '<div class="cracks">
+    layer.innerHTML = '<div class="cracks">╲ ╱<br>╱ ╲</div><strong>¡Ataque de error! −20 segundos</strong>';
+    document.body.append(layer); setTimeout(() => layer.remove(), 1500);
+  }
+
+  document.addEventListener('submit', e => {
+    if (e.target.id === 'entry') {
+      e.preventDefault();
+      begin(e.target);
+      return;
+    }
+    
+    e.preventDefault();
+    if (Date.now() < hitUntil) return;
+
+    const qList = window.ESCAPE_QUESTIONS || [];
+
+    if (e.target.id === 'numeric') {
+      const raw = $('number').value.trim().replace(',', '.');
+      if (!raw || !Number.isFinite(Number(raw))) { 
+        $('feedback').textContent = 'Ingresa un valor numérico válido.'; 
+        return; 
+      }
+      answer(raw, Math.abs(Number(raw) - qList[i].value) < 0.0005);
+    }
+
+    if (e.target.id === 'exit') {
+      if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
+      else {
+        s.finalErrors++; 
+        s.penalty += 20; 
+        deadline -= 20000; 
+        attack();
+        $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; 
+        tick();
+      }
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (Date.now() < hitUntil) return;
+    const b = e.target.closest('[data-do]'); 
+    if (!b) return;
+
+    const qList = window.ESCAPE_QUESTIONS || [];
+
+    switch (b.dataset.do) {
+      case 'question': question(); break;
+      case 'lesson': lesson(); break;
+      case 'answer': { const o = order[Number(b.dataset.index)]; answer(o.text, o.index === 0); break; }
+      case 'dial': { const o = order[Number($('dial').value)]; answer(o.text, o.index === 0); break; }
+      case 'lens': $('choices').classList.add('holding'); b.textContent = '⌕ Lupa equipada — muévela sobre una tarjeta'; break;
+      case 'next': if (i < qList.length - 1) { i++; lesson(); } else finalLock(); break;
+      case 'retry': modal().innerHTML = ''; s.retries++; while (i > 0 && qList[i - 1].room === qList[i].room) i--; lesson(); startClock(); break;
+      case 'end': finish(false); break;
+      case 'csv': csv(); break;
+      case 'home': home(); break;
+    }
+  });
+
+  function init() {
+    if (window.gameAudio && $('sound-toggle')) window.gameAudio.init($('sound-toggle'));
+    const brand = document.querySelector('.brand');
+    if (brand) brand.addEventListener('click', e => e.preventDefault());
+    home();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
