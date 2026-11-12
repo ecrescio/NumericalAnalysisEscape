@@ -38,8 +38,8 @@ window.ESCAPE_QUESTIONS = [
     options: [
       'Euler Explícito', 
       'Euler Implícito', 
-      'Runge-Kutta de 4º orden', 
-      'Diferencias Finitas centradas'
+      'Runge-Kutta de cuarto orden', 
+      'Diferencias finitas centradas'
     ],
     hint: 'Es el método de avance por tangente más básico evaluado en t_n.',
     solution: 'Heun utiliza el método de Euler Explícito como paso predictor para estimar la pendiente futura.'
