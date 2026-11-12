@@ -105,7 +105,6 @@
 
   window.addEventListener('resize', fitFormulae);
 
-  // Detecta si una opción de respuesta es una fórmula matemática en lugar de una oración en español
   function isMathOption(txt) {
     return /[_^\\]|\\frac|\\approx|^[a-zA-Z0-9\s=+\-*/().<>]+$/.test(txt.trim()) && txt.trim().split(' ').length <= 8;
   }
@@ -115,7 +114,6 @@
     if (!mainApp) return;
     requestAnimationFrame(fitFormulae);
 
-    // 1. Renderizar bloques .formula
     mainApp.querySelectorAll('.formula').forEach(el => {
       if (el.dataset.katexRendered) return;
       const t = el.textContent;
@@ -124,7 +122,6 @@
       el.dataset.katexRendered = "true";
     });
 
-    // 2. Renderizar opciones de respuesta matemáticas en cualquier tipo de pregunta
     mainApp.querySelectorAll('.answer-option').forEach(el => {
       if (el.dataset.katexRendered) return;
       const txt = el.textContent.trim();
@@ -134,7 +131,6 @@
       }
     });
 
-  
     mainApp.querySelectorAll('h1, p, label, .methods-simulation span').forEach(el => {
       if (el.dataset.katexRendered || el.querySelector('input, select')) return;
       const html = el.innerHTML;
@@ -154,7 +150,16 @@
     });
   }
 
-  // Simulación interactiva integrada (garantiza que siempre aparezca en Pregunta 7)
+  // Función restaurada para renderizar el contenedor de cada sala/pregunta
+  function frame(body) {
+    const mainApp = app();
+    const qList = window.ESCAPE_QUESTIONS || [];
+    if (!mainApp || !qList[i]) return;
+    mainApp.innerHTML = `<section class="room-main" style="margin:38px auto;max-width:780px"><div class="room-kicker">SALA ${qList[i].room + 1} / 4 · ${titles[qList[i].room]} · PREGUNTA ${i + 1} / ${qList.length}</div>${body}</section>`;
+    typeset();
+  }
+
+  // Simulación interactiva integrada (Pregunta 7)
   function renderEulerSim(anchor) {
     if (!anchor) return;
     if (window.mountEulerSimulation) {
@@ -231,7 +236,7 @@
     sliderH.addEventListener('input', updateEuler);
     updateEuler();
   }
-  // Simulación interactiva táctil integrada (Pregunta 10)
+
   // Simulación interactiva táctil comparativa (Pregunta 10: Euler vs Heun vs RK4)
   function renderMethodsSim(anchor) {
     if (!anchor) return;
@@ -299,8 +304,6 @@
 
     anchor.before(panel);
 
-    // Dibujar curva exacta y = e^(2t) para t en [0, 0.58]
-    // Escala: X = 55 + t * 560 (t=0.5 -> X=335) | Y = 230 - y * 65 (y=1 -> Y=165)
     const pathExact = panel.querySelector('.exact-exp');
     let d = '';
     for (let k = 0; k <= 60; k++) {
@@ -312,7 +315,6 @@
     }
     pathExact.setAttribute('d', d);
 
-    // Evento táctil / clic para revelar los tres métodos
     const wrapper = panel.querySelector('.touch-canvas-wrapper');
     const overlay = panel.querySelector('.tap-overlay');
     const reveal = panel.querySelector('.mystery-reveal');
@@ -445,7 +447,7 @@
       body = `<label>Selecciona la respuesta<select id="dial">${order.map((o, n) => `<option value="${n}">${o.text}</option>`).join('')}</select></label><button type="button" class="button button-primary" data-do="dial">Desbloquear</button>`;
     } else if (q.type === 'search') {
       const spots = [[16, 22], [73, 20], [25, 75], [76, 70]].sort(() => Math.random() - .5);
-      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
+      body = `<div class="formula-hunt dark-search" id="choices">${order.map((o, n) => `<button type="button" class="answer-option formula-card" style="left:${spots[n][0]}\%;top:${spots[n][1]}%" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}<div class="darkness"></div><div class="hunt-lens" aria-hidden="true">⌕</div></div>`;
     } else {
       body = `<div class="answer-list" id="choices">${order.map((o, n) => `<button type="button" class="answer-option" data-do="answer" data-index="${n}">${o.text}</button>`).join('')}</div>`;
     }
@@ -458,9 +460,7 @@
     if (q.methodsSim) {
       renderMethodsSim($('magnifier-controls'));
     }
-    if (q.methodsSim && window.mountMethodsComparison) {
-      window.mountMethodsComparison($('magnifier-controls'));
-    }
+
     if (q.type === 'search') {
       const area = $('choices');
       if (area) {
@@ -539,75 +539,4 @@
     const layer = document.createElement('div'); layer.className = 'spell-attack';
     const qList = window.ESCAPE_QUESTIONS || [];
     layer.style.setProperty('--attack-color', ['#55caff', '#b980ff', '#ff5252', '#c4d1dd'][qList[i].room]);
-    layer.innerHTML = '<div class="cracks">╲ ╱<br>╱ ╲</div><strong>¡Ataque de error! −20 segundos</strong>';
-    document.body.append(layer); setTimeout(() => layer.remove(), 1500);
-  }
-
-  document.addEventListener('submit', e => {
-    if (e.target.id === 'entry') {
-      e.preventDefault();
-      begin(e.target);
-      return;
-    }
-    
-    e.preventDefault();
-    if (Date.now() < hitUntil) return;
-
-    const qList = window.ESCAPE_QUESTIONS || [];
-
-    if (e.target.id === 'numeric') {
-      const raw = $('number').value.trim().replace(',', '.');
-      if (!raw || !Number.isFinite(Number(raw))) { 
-        $('feedback').textContent = 'Ingresa un valor numérico válido.'; 
-        return; 
-      }
-      answer(raw, Math.abs(Number(raw) - qList[i].value) < 0.0005);
-    }
-
-    if (e.target.id === 'exit') {
-      if (e.target.elements.word.value.trim().toUpperCase() === 'EULER') finish(true);
-      else {
-        s.finalErrors++; 
-        s.penalty += 20; 
-        deadline -= 20000; 
-        attack();
-        $('feedback').textContent = '−20 segundos. Une las runas en orden de las salas.'; 
-        tick();
-      }
-    }
-  });
-
-  document.addEventListener('click', e => {
-    if (Date.now() < hitUntil) return;
-    const b = e.target.closest('[data-do]'); 
-    if (!b) return;
-
-    const qList = window.ESCAPE_QUESTIONS || [];
-
-    switch (b.dataset.do) {
-      case 'question': question(); break;
-      case 'lesson': lesson(); break;
-      case 'answer': { const o = order[Number(b.dataset.index)]; answer(o.text, o.index === 0); break; }
-      case 'dial': { const o = order[Number($('dial').value)]; answer(o.text, o.index === 0); break; }
-      case 'lens': $('choices').classList.add('holding'); b.textContent = '⌕ Lupa equipada — muévela sobre una tarjeta'; break;
-      case 'next': if (i < qList.length - 1) { i++; lesson(); } else finalLock(); break;
-      case 'retry': modal().innerHTML = ''; s.retries++; while (i > 0 && qList[i - 1].room === qList[i].room) i--; lesson(); startClock(); break;
-      case 'end': finish(false); break;
-      case 'csv': csv(); break;
-      case 'home': home(); break;
-    }
-  });
-
-  function init() {
-    if (window.gameAudio && $('sound-toggle')) window.gameAudio.init($('sound-toggle'));
-    const brand = document.querySelector('.brand');
-    if (brand) brand.addEventListener('click', e => e.preventDefault());
-    home();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+    layer.innerHTML = '<div class="cracks">
