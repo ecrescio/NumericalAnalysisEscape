@@ -22,7 +22,7 @@ window.ESCAPE_QUESTIONS = [
     text: 'Para $dy/dt = -y$ con $y(0) = 2$ y $h = 0.2$, ingresa el valor aproximado para $y(0.2)$.',
     value: 1.6,
     hint: 'Evalúa f(0, 2) = -2. Luego calcula 2 + 0.2(-2).',
-    solution: 'y_1 = 2 + 0.2(-2) = 1.6.'
+    solution: '$y_1 = 2 + 0.2(-2) = 1.6$.'
   },
 
   // ==========================================
@@ -58,7 +58,7 @@ window.ESCAPE_QUESTIONS = [
       'y_{n+1} = y_n + 50h'
     ],
     hint: 'Sustituye f(t_{n+1}, y_{n+1}) = -50 y_{n+1} y despeja y_{n+1}.',
-    solution: 'y_{n+1} = y_n - 50h y_{n+1} ⟹ y_{n+1}(1 + 50h) = y_n ⟹ y_{n+1} = y_n / (1 + 50h).'
+    solution: '$y_{n+1} = y_n - 50h y_{n+1} ⟹ y_{n+1}(1 + 50h) = y_n ⟹ y_{n+1} = y_n / (1 + 50h)$.'
   },
   {
     room: 1,
@@ -69,7 +69,7 @@ window.ESCAPE_QUESTIONS = [
     text: 'Dada $dy/dt = -10y$ con $y(0) = 1$ y paso $h = 0.1$, selecciona el valor exacto de $y(0.1)$ usando Euler Implícito.',
     options: ['0.50', '0.00', '1.00', '0.20'],
     hint: 'Sustituye h = 0.1 y λ = -10 en 1 / (1 - 0.1(-10)) = 1 / (1 + 1) = 1/2.',
-    solution: 'y_1 = 1 / (1 - 0.1(-10)) = 1 / 2 = 0.50.'
+    solution: '$y_1 = 1 / (1 - 0.1(-10)) = 1 / 2 = 0.50$.'
   },
 
   // ==========================================
@@ -82,9 +82,9 @@ window.ESCAPE_QUESTIONS = [
     theory: 'Para la ecuación de prueba $dy/dt = \\lambda y$ (con $\\lambda < 0$), el factor de amplificación $Q(h\\lambda)$ debe cumplir $|Q(h\\lambda)| < 1$ para no oscilar o divergir.',
     formula: 'Q(h\\lambda) = 1 + h\\lambda \\qquad |1 + h\\lambda| < 1',
     text: '¿Cuál es el límite máximo del paso $h$ para que el método de Euler Explícito sea estable si $\\lambda = -10$?',
-    options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
+    options: ['$h < 0.2$', '$h < 0.1$', '$h < 0.5$', 'Estable para todo h'],
     hint: 'Resuelve la desigualdad -1 < 1 - 10h < 1.',
-    solution: '-1 < 1 - 10h < 1 ⟹ -2 < -10h < 0 ⟹ h < 0.2.'
+    solution: '$-1 < 1 - 10h < 1 ⟹ -2 < -10h < 0 ⟹ h < 0.2$.'
   },
   {
     room: 2,
@@ -132,7 +132,7 @@ window.ESCAPE_QUESTIONS = [
       'y\'(t_n) \\approx \\frac{y_{n+1} + y_n}{2}'
     ],
     hint: 'Busca la expresión que evalúa los nodos a la izquierda (n-1) y a la derecha (n+1) divididos entre 2h.',
-    solution: 'La diferencia finita centrada usa el nodo posterior y anterior: (y_{n+1} - y_{n-1}) / (2h), logrando un error O(h²).'
+    solution: 'La diferencia finita centrada usa el nodo posterior y anterior: ($y_{n+1} - y_{n-1}) / (2h)$, logrando un error O(h²).'
   },
 
   {
@@ -150,6 +150,6 @@ window.ESCAPE_QUESTIONS = [
       'Aproximación constante (Orden 0)'
     ],
     hint: 'Observa que el punto cae por encima de la recta tangente inicial (Euler Explícito) pero ligeramente por debajo de la curva exacta e^{2t}.',
-    solution: '¡Correcto! Para y\'=2y con h=0.5: Euler Explícito da y_1 = 2.00 (sobre la tangente gris), la exacta es e^1 ≈ 2.72, y Heun promedia las pendientes dando y_1 = 2.50.'
+    solution: '¡Correcto! Para $y\'=2y$ con h=0.5: Euler Explícito da $y_1$ = 2.00 (sobre la tangente gris), la exacta es $e^1 ≈ 2.72$, y Heun promedia las pendientes dando $y_1 = 2.50$.'
   }
 ];
