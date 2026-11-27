@@ -84,7 +84,7 @@ window.ESCAPE_QUESTIONS = [
     text: '¿Cuál es el límite máximo del paso $h$ para que el método de Euler Explícito sea estable si $\\lambda = -10$?',
     options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
     hint: 'Resuelve la desigualdad $-1 < 1 - 10h < 1$.',
-    solution: '$-1 < 1 - 10h < 1 ⟹ -2 < -10h < 0 ⟹ h < 0.2$'
+    solution: '$-1 < 1 - 10h < 1$ ⟹ $-2 < -10h < 0$ ⟹ $h < 0.2$'
   },
   {
     room: 2,
