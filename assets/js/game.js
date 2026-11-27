@@ -105,10 +105,13 @@
 
   window.addEventListener('resize', fitFormulae);
 
+ 
   function isMathOption(txt) {
-    return /[_^\\]|\\frac|\\approx|^[a-zA-Z0-9\s=+\-*/().<>]+$/.test(txt.trim()) && txt.trim().split(' ').length <= 8;
+    const clean = txt.trim();
+    // Si tiene palabras en español de 3 o más letras sin comandos LaTeX, es texto normal
+    if (!/[_^\\]/.test(clean) && /\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/.test(clean)) return false;
+    return /[_^\\=+\-*/<>]/.test(clean) && clean.split(' ').length <= 8;
   }
-
   function typeset() {
     const mainApp = app();
     if (!mainApp) return;
