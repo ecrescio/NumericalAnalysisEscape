@@ -79,7 +79,7 @@ window.ESCAPE_QUESTIONS = [
     room: 2,
     type: 'choice',
     title: 'Condición de Estabilidad Absoluta',
-    theory: 'Para la ecuación de prueba dy/dt = \lambda y (con \lambda < 0), el factor de amplificación Q(h\lambda) debe cumplir |Q(h\lambda)| < 1$ para no oscilar o divergir.',
+    theory: 'Para la ecuación de prueba dy/dt = $\lambda$ y (con $\lambda < 0$), el factor de amplificación Q(h$\lambda$) debe cumplir |Q(h$\lambda)$| < 1$ para no oscilar o divergir.',
     formula: 'Q(h\\lambda) = 1 + h\\lambda \\qquad |1 + h\\lambda| < 1',
     text: '¿Cuál es el límite máximo del paso $h$ para que el método de Euler Explícito sea estable si $\\lambda = -10$?',
     options: ['h < 0.2', 'h < 0.1', 'h < 0.5', 'Estable para todo h'],
