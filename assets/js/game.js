@@ -106,12 +106,22 @@
   window.addEventListener('resize', fitFormulae);
 
  
-  function isMathOption(txt) {
-    const clean = txt.trim();
+  //function isMathOption(txt) {
+  //  const clean = txt.trim();
     // Si tiene palabras en español de 3 o más letras sin comandos LaTeX, es texto normal
-    if (!/[_^\\]/.test(clean) && /\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/.test(clean)) return false;
-    return /[_^\\=+\-*/<>]/.test(clean) && clean.split(' ').length <= 8;
-  }
+   // if (!/[_^\\]/.test(clean) && /\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/.test(clean)) return false;
+    //return /[_^\\=+\-*/<>]/.test(clean) && clean.split(' ').length <= 8;
+ // }
+
+ function isMathOption(txt) {
+    const clean = txt.trim();
+    // Si tiene palabras de 3 o más letras (sin comandos LaTeX ni funciones como sin/cos/ln/exp), es texto normal
+    if (!/[_^\\]/.test(clean) && /\b(?!sin|cos|tan|ln|log|exp)[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/i.test(clean)) {
+      return false;
+    }
+    // Renderiza como KaTeX si es un número puro o una expresión matemática corta
+    return (/^[0-9.,\-+]+$/.test(clean) || /[_^\\=+\-*/<>]/.test(clean)) && clean.split(' ').length <= 8;
+  } 
   function typeset() {
     const mainApp = app();
     if (!mainApp) return;
