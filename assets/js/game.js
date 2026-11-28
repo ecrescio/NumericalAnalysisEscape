@@ -83,7 +83,10 @@
 
   function latex(t) {
     if (!t) return '';
-    return t.replaceAll('−', '-')
+    return t.replaceAll('&lt;', '<')
+            .replaceAll('&gt;', '>')
+            .replaceAll('&amp;', '&')
+            .replaceAll('−', '-')
             .replaceAll('½', String.raw`\frac{1}{2}`)
             .replaceAll('Δ', String.raw`\Delta `)
             .replaceAll('²', '^2')
@@ -105,23 +108,51 @@
 
   window.addEventListener('resize', fitFormulae);
 
- 
-  //function isMathOption(txt) {
-  //  const clean = txt.trim();
-    // Si tiene palabras en español de 3 o más letras sin comandos LaTeX, es texto normal
-   // if (!/[_^\\]/.test(clean) && /\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/.test(clean)) return false;
-    //return /[_^\\=+\-*/<>]/.test(clean) && clean.split(' ').length <= 8;
- // }
-
- function isMathOption(txt) {
+  function isMathOption(txt) {
     const clean = txt.trim();
-    // Si tiene palabras de 3 o más letras (sin comandos LaTeX ni funciones como sin/cos/ln/exp), es texto normal
     if (!/[_^\\]/.test(clean) && /\b(?!sin|cos|tan|ln|log|exp)[a-zA-ZáéíóúÁÉÍÓÚñÑ]{3,}\b/i.test(clean)) {
       return false;
     }
-    // Renderiza como KaTeX si es un número puro o una expresión matemática corta
     return (/^[0-9.,\-+]+$/.test(clean) || /[_^\\=+\-*/<>]/.test(clean)) && clean.split(' ').length <= 8;
-  } 
+  }
+
+  function renderInlineMath(el) {
+    if (!el) return;
+    if (el.querySelector('input, select')) {
+      el.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('$')) {
+          const span = document.createElement('span');
+          span.innerHTML = node.nodeValue.replace(/\$([^$]+)\$/g, (_, formula) => {
+            const mathSpan = document.createElement('span');
+            mathSpan.className = 'math-inline';
+            if (window.katex) {
+              katex.render(latex(formula), mathSpan, { throwOnError: false });
+            } else {
+              mathSpan.textContent = formula;
+            }
+            return mathSpan.outerHTML;
+          });
+          node.replaceWith(...span.childNodes);
+        }
+      });
+      return;
+    }
+
+    const html = el.innerHTML;
+    if (html.includes('$')) {
+      el.innerHTML = html.replace(/\$([^$]+)\$/g, (_, formula) => {
+        const span = document.createElement('span');
+        span.className = 'math-inline';
+        if (window.katex) {
+          katex.render(latex(formula), span, { throwOnError: false });
+        } else {
+          span.textContent = formula;
+        }
+        return span.outerHTML;
+      });
+    }
+  }
+
   function typeset() {
     const mainApp = app();
     if (!mainApp) return;
@@ -144,26 +175,11 @@
       }
     });
 
-    mainApp.querySelectorAll('h1, p, label, .methods-simulation span').forEach(el => {
-      if (el.dataset.katexRendered || el.querySelector('input, select')) return;
-      const html = el.innerHTML;
-      if (html.includes('$')) {
-        el.innerHTML = html.replace(/\$([^$]+)\$/g, (_, formula) => {
-          const span = document.createElement('span');
-          span.className = 'math-inline';
-          if (window.katex) {
-            katex.render(latex(formula), span, { throwOnError: false });
-          } else {
-            span.textContent = formula;
-          }
-          return span.outerHTML;
-        });
-        el.dataset.katexRendered = "true";
-      }
+    mainApp.querySelectorAll('h1, p, label, .methods-simulation span, .euler-simulation span').forEach(el => {
+      renderInlineMath(el);
     });
   }
 
-  // Función restaurada para renderizar el contenedor de cada sala/pregunta
   function frame(body) {
     const mainApp = app();
     const qList = window.ESCAPE_QUESTIONS || [];
@@ -172,7 +188,6 @@
     typeset();
   }
 
-  // Simulación interactiva integrada (Pregunta 7)
   function renderEulerSim(anchor) {
     if (!anchor) return;
     if (window.mountEulerSimulation) {
@@ -186,7 +201,7 @@
       <div style="background: #181623; border: 1px solid #302a45; padding: 16px; border-radius: 8px; margin-bottom: 20px; color: #e1dfeb; text-align: left;">
         <p style="margin-top:0;"><strong>Simulación IVP:</strong> $\\frac{dy}{dt} = -y$, con $y(0) = 1$. Compara la solución exacta $y(t) = e^{-t}$ con el Método de Euler Explícito.</p>
         <div class="euler-controls" style="margin: 12px 0; display: flex; gap: 15px; align-items: center; color: #fff;">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">Tamaño de paso (h): 
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">Tamaño de paso ($h$): 
             <input class="euler-h" type="range" min="0.05" max="0.8" step="0.05" value="0.2" style="cursor: pointer; width: 180px;">
             <span class="h-val" style="font-weight: bold; color: #e8c882; min-width: 40px; display: inline-block;">0.20</span>
           </label>
@@ -250,7 +265,6 @@
     updateEuler();
   }
 
-  // Simulación interactiva táctil comparativa (Pregunta 10: Euler vs Heun vs RK4)
   function renderMethodsSim(anchor) {
     if (!anchor) return;
 
@@ -262,39 +276,31 @@
         
         <div class="touch-canvas-wrapper" style="position: relative; cursor: pointer; user-select: none;">
           <svg class="methods-scene" viewBox="0 0 520 270" role="img" aria-label="Comparación visual entre Euler, Heun y RK4" style="width: 100%; background: #0f0d17; border: 1px dashed #443c63; border-radius: 6px; display: block;">
-            <!-- Ejes y línea guía en t = 0.5 -->
             <line x1="55" y1="230" x2="490" y2="230" stroke="#555" stroke-width="2"/>
             <line x1="55" y1="20" x2="55" y2="230" stroke="#555" stroke-width="2"/>
             <line x1="335" y1="20" x2="335" y2="230" stroke="#333" stroke-dasharray="4 4"/>
             
-            <!-- Etiquetas de ejes -->
             <text x="50" y="250" fill="#aaa" font-size="12">t₀ = 0</text>
             <text x="320" y="250" fill="#e8c882" font-size="12" font-weight="bold">t₁ = 0.5</text>
             <text x="15" y="169" fill="#aaa" font-size="11">y=1.0</text>
             <text x="15" y="104" fill="#aaa" font-size="11">y=2.0</text>
             <text x="15" y="39" fill="#aaa" font-size="11">y=3.0</text>
 
-            <!-- Curva Exacta y = e^(2t) -->
             <path class="exact-exp" fill="none" stroke="#73dcca" stroke-width="2.5"/>
             <circle cx="335" cy="53.3" r="4" fill="#73dcca"/>
             <text x="345" y="42" fill="#73dcca" font-size="11" font-weight="bold">Exacta: 2.718</text>
 
-            <!-- Punto Inicial (0, 1) -> X=55, Y=165 -->
             <circle cx="55" cy="165" r="5" fill="#fff"/>
 
-            <!-- Grupo de los 3 métodos que se revela al tocar -->
             <g class="mystery-reveal" style="opacity: 0; transition: opacity 0.4s ease;">
-              <!-- 1. RK4: y1 = 2.708 -> Y = 230 - 2.708*65 = 54.0 -->
               <line x1="55" y1="165" x2="335" y2="54.0" stroke="#55caff" stroke-width="2" stroke-dasharray="5 3"/>
               <circle cx="335" cy="54.0" r="6" fill="#55caff" stroke="#0f0d17" stroke-width="1.5"/>
               <text x="345" y="61" fill="#55caff" font-size="12" font-weight="bold">RK4: 2.708</text>
 
-              <!-- 2. Heun: y1 = 2.500 -> Y = 230 - 2.500*65 = 67.5 -->
               <line x1="55" y1="165" x2="335" y2="67.5" stroke="#e8c882" stroke-width="2" stroke-dasharray="5 3"/>
               <circle cx="335" cy="67.5" r="6" fill="#e8c882" stroke="#0f0d17" stroke-width="1.5"/>
               <text x="345" y="78" fill="#e8c882" font-size="12" font-weight="bold">Heun: 2.500</text>
 
-              <!-- 3. Euler Explícito: y1 = 2.000 -> Y = 230 - 2.000*65 = 100.0 -->
               <line x1="55" y1="165" x2="335" y2="100.0" stroke="#ff6270" stroke-width="2" stroke-dasharray="5 3"/>
               <circle cx="335" cy="100.0" r="6" fill="#ff6270" stroke="#0f0d17" stroke-width="1.5"/>
               <text x="345" y="105" fill="#ff6270" font-size="12" font-weight="bold">Euler: 2.000</text>
@@ -358,7 +364,7 @@
         <div style="max-width: 480px; width: 100%; background: #1a1829; padding: 30px; border-radius: 12px; border: 1px solid #322c4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
           <div class="eyebrow" style="color: #e8c882; font-weight: bold; letter-spacing: 1px; font-size: 0.85em; margin-bottom: 10px; text-transform: uppercase;">ESCAPE ROOM DE MÉTODOS NUMÉRICOS</div>
           <h1 style="margin: 0 0 10px 0; font-size: 1.8em; color: #fff;">Manual Encantado de<br><em style="color: #b8a6ff; font-style: normal;">IVPs y ODEs</em></h1>
-          <p class="hero-lead" style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 20px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad y RK4. Encuentra las runas y escapa.</p>
+          <p class="hero-lead" style="color: #a7a2b0; font-size: 0.9em; margin-bottom: 20px;">Cuatro salas. Métodos de Euler, Heun, Estabilidad, RK4 y Diferencias Finitas. Encuentra las runas y escapa.</p>
           
           <form id="entry" onsubmit="window.submitEntryForm(event)" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
             <label style="display: flex; flex-direction: column; gap: 5px; color: #ddd; font-size: 0.9em;">
@@ -503,7 +509,13 @@
     
     if (!correct) {
       r.errors++; s.penalty += 20; deadline -= 20000; attack();
-      $('feedback').textContent = `−20 segundos. ${qList[i].hint}`; tick(); return;
+      const fb = $('feedback');
+      if (fb) {
+        fb.textContent = `−20 segundos. ${qList[i].hint}`;
+        renderInlineMath(fb);
+      }
+      tick(); 
+      return;
     }
     if (window.gameAudio) window.gameAudio.effect('success');
     account(); r.solved = true; stage = 'solved';
